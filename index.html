@@ -37,7 +37,7 @@
       <aside class="panel palette-panel">
         <div class="panel-title"><span>1</span><div><h2>Page elements</h2><p>Drag an item into the phone.</p></div></div>
         <div id="palette" class="palette"></div>
-        <p class="hint">Double-click an element inside the phone to remove it.</p>
+        <p class="hint">Drag on desktop, or tap an element to add it on mobile. Double-click an element inside the phone to remove it.</p>
       </aside>
 
       <section class="panel phone-panel">
@@ -60,6 +60,22 @@
 
       <aside class="panel results-panel">
         <div class="panel-title"><span>3</span><div><h2>Live result</h2><p id="modeText">Can the shopper identify, evaluate, choose and act?</p></div></div>
+
+        <div class="shopper-character" id="shopperCharacter" data-mood="waiting" aria-live="polite">
+          <div class="character-visual" aria-hidden="true">
+            <div class="character-head">
+              <span class="character-hair"></span>
+              <span class="character-eye eye-left"></span>
+              <span class="character-eye eye-right"></span>
+              <span class="character-mouth"></span>
+            </div>
+            <div class="character-body"></div>
+          </div>
+          <div class="character-copy">
+            <span id="characterMood">Waiting for the layout</span>
+            <strong id="characterQuote">“Show me the product page.”</strong>
+          </div>
+        </div>
 
         <div class="score-block">
           <div class="score-head"><span>Page clarity</span><strong id="score">—</strong></div>
