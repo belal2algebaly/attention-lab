@@ -57,6 +57,7 @@ const semanticRules = {
 };
 
 const palette = document.getElementById('palette');
+const mobilePalette = document.getElementById('mobilePalette');
 const screen = document.getElementById('screen');
 const contentLayer = document.getElementById('contentLayer');
 const pathLayer = document.getElementById('pathLayer');
@@ -151,30 +152,48 @@ function applyPreset(name) {
   schedule();
 }
 
+function buildPaletteItem(d, mobile = false) {
+  const el = document.createElement(mobile ? 'button' : 'div');
+  el.className = mobile ? 'mobile-palette-item' : 'palette-item';
+  el.dataset.id = d.id;
+  if (!mobile) el.draggable = true;
+  el.type = mobile ? 'button' : undefined;
+  el.innerHTML = `
+    <span class="palette-icon">${d.icon}</span>
+    <span>
+      <strong>${d.label}</strong>
+      <small>${d.desc}${d.category === 'extra' ? ' · optional' : ''}</small>
+    </span>`;
+
+  if (!mobile) el.addEventListener('dragstart', () => dragId = d.id);
+  el.addEventListener('click', () => {
+    if (!placed.has(d.id)) {
+      const p = initialDefaults[d.id] || [16, Math.min(contentLayer.scrollHeight - 90, 580 + (placed.size * 44))];
+      add(d.id, p[0], p[1]);
+      selectedElementId = d.id;
+      updateActiveLabel();
+    } else {
+      selectedElementId = d.id;
+      updateActiveLabel();
+      placed.get(d.id)?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+    }
+    if (mobile) closeMobileElementSheet();
+  });
+  return el;
+}
+
 function renderPalette() {
   palette.innerHTML = '';
+  if (mobilePalette) mobilePalette.innerHTML = '';
   defs.forEach(d => {
-    const el = document.createElement('div');
-    el.className = 'palette-item';
-    el.dataset.id = d.id;
-    el.draggable = true;
-    el.innerHTML = `
-      <span class="palette-icon">${d.icon}</span>
-      <span><strong>${d.label}</strong><small>${d.desc}${d.category === 'extra' ? ' · optional' : ''}</small></span>`;
-    el.addEventListener('dragstart', () => dragId = d.id);
-    el.addEventListener('click', () => {
-      if (!placed.has(d.id)) {
-        const p = initialDefaults[d.id] || [16, 580 + (placed.size * 44)];
-        add(d.id, p[0], p[1]);
-      }
-    });
-    palette.appendChild(el);
+    palette.appendChild(buildPaletteItem(d, false));
+    if (mobilePalette) mobilePalette.appendChild(buildPaletteItem(d, true));
   });
   syncPalette();
 }
 
 function syncPalette() {
-  document.querySelectorAll('.palette-item').forEach(el => el.classList.toggle('used', placed.has(el.dataset.id)));
+  document.querySelectorAll('.palette-item, .mobile-palette-item').forEach(el => el.classList.toggle('used', placed.has(el.dataset.id)));
   emptyHint.style.display = placed.size ? 'none' : 'grid';
 }
 
@@ -990,35 +1009,39 @@ function updateCharacter(score, critical, reactions) {
   const quote = document.getElementById('characterQuote');
   const sub = document.getElementById('characterSubtext');
 
+  const actionBlocked = critical.some(x => /Add to cart|Product options must|Variants and Add/i.test(x));
+  const hasCritical = critical.length > 0;
+
   let state = 'hesitant';
   let moodText = 'Hesitant';
-  let quoteText = 'I need to look around before I can decide.';
-  let subText = reactions[0] || 'Small spatial changes are affecting the model continuously.';
+  let quoteText = reactions[0] || 'I need to look around before I can decide.';
+  let subText = 'The page works, but the decision path still requires extra effort.';
 
-  if (critical.some(x => /Add to cart|Product options must|Variants and Add/i.test(x))) {
+  if (actionBlocked) {
     state = 'critical';
     moodText = 'Blocked';
-    quoteText = reactions.find(x => /purchase action|next action|explains the product/i.test(x)) || 'I cannot complete the purchase from here.';
-    subText = 'The action stage is missing, too deep, hidden, or disconnected from option selection.';
-  } else if (score >= 86) {
+    quoteText = reactions.find(x => /purchase action|next action|explains the product/i.test(x)) || 'I understand parts of the page, but I cannot complete the purchase confidently.';
+    subText = 'The purchase action is missing, too deep, hidden, or disconnected from option selection.';
+  } else if (score < 65 || hasCritical) {
+    state = 'critical';
+    moodText = score < 40 ? 'Frustrated' : 'Confused';
+    quoteText = reactions[0] || 'This page is making me work too hard.';
+    subText = 'Low clarity means important information is hidden, misplaced, crowded, or disconnected.';
+  } else if (score < 80) {
+    state = 'hesitant';
+    moodText = 'Uncertain';
+    quoteText = reactions[0] || 'I can continue, but I still need to search.';
+    subText = 'The layout is usable, but the weak score should still feel visibly uncomfortable.';
+  } else if (score < 90) {
+    state = 'good';
+    moodText = 'Comfortable';
+    quoteText = reactions[0] || 'This is mostly clear, with one relationship still slowing me down.';
+    subText = 'The shopper can progress, but the page is not yet fully resolved.';
+  } else {
     state = 'satisfied';
     moodText = 'Satisfied';
     quoteText = 'Everything feels clear. I know what to do next.';
-    subText = 'Critical elements are visible, related, and arranged in a low-cost scan path.';
-  } else if (score >= 70) {
-    state = 'good';
-    moodText = 'Comfortable';
-    quoteText = 'This is mostly clear, but one relationship still makes me pause.';
-  } else if (score < 50 || critical.length) {
-    state = 'critical';
-    moodText = 'Confused';
-    quoteText = reactions[0] || 'I cannot find the information I need.';
-    subText = 'Critical content is missing, hidden, crowded, or disconnected.';
-  } else if (score < 70 && reactions.length) {
-    state = 'hesitant';
-    moodText = 'Hesitant';
-    quoteText = reactions[0];
-    subText = 'The element exists, but its semantic position does not support the decision at the right moment.';
+    subText = 'Critical elements are visible, semantically related, and arranged in a low-cost scan path.';
   }
 
   stage.dataset.mood = state;
@@ -1102,6 +1125,27 @@ function updateUI(r) {
   document.getElementById('bestNextMove').textContent = nextMove;
 }
 
+
+function openMobileElementSheet() {
+  const sheet = document.getElementById('mobileElementSheet');
+  const btn = document.getElementById('mobileAddBtn');
+  if (!sheet) return;
+  sheet.hidden = false;
+  requestAnimationFrame(() => sheet.classList.add('open'));
+  btn?.setAttribute('aria-expanded', 'true');
+  document.body.classList.add('sheet-open');
+}
+
+function closeMobileElementSheet() {
+  const sheet = document.getElementById('mobileElementSheet');
+  const btn = document.getElementById('mobileAddBtn');
+  if (!sheet || sheet.hidden) return;
+  sheet.classList.remove('open');
+  btn?.setAttribute('aria-expanded', 'false');
+  document.body.classList.remove('sheet-open');
+  setTimeout(() => { if (!sheet.classList.contains('open')) sheet.hidden = true; }, 220);
+}
+
 modeSelect.addEventListener('change', () => {
   document.getElementById('modeText').textContent =
     modeSelect.value === 'task' ? 'Continuous model of task flow, grouping, visibility, fold depth, and scan cost.' :
@@ -1128,6 +1172,11 @@ const dialog = document.getElementById('methodDialog');
 document.getElementById('methodBtn').addEventListener('click', () => dialog.showModal());
 document.getElementById('closeDialog').addEventListener('click', () => dialog.close());
 dialog.addEventListener('click', e => { if (e.target === dialog) dialog.close(); });
+
+document.getElementById('mobileAddBtn')?.addEventListener('click', openMobileElementSheet);
+document.getElementById('mobileSheetClose')?.addEventListener('click', closeMobileElementSheet);
+document.getElementById('mobileSheetBackdrop')?.addEventListener('click', closeMobileElementSheet);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMobileElementSheet(); });
 
 renderPalette();
 setTimeout(reset, 50);

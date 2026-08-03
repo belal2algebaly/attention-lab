@@ -127,6 +127,10 @@
                   </div>
                 </div>
               </div>
+              <button id="mobileAddBtn" class="mobile-add-btn" type="button" aria-expanded="false" aria-controls="mobileElementSheet">
+                <span aria-hidden="true">+</span>
+                <strong>Add element</strong>
+              </button>
             </div>
             <div class="overlay-guide" aria-hidden="true">
               <span><i class="guide path"></i> Attention path</span>
@@ -200,6 +204,20 @@
         </div>
       </section>
     </section>
+
+    <div id="mobileElementSheet" class="mobile-element-sheet" hidden>
+      <button id="mobileSheetBackdrop" class="mobile-sheet-backdrop" type="button" aria-label="Close elements"></button>
+      <section class="mobile-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="mobileSheetTitle">
+        <div class="mobile-sheet-head">
+          <div>
+            <span class="eyebrow">Page elements</span>
+            <strong id="mobileSheetTitle">Add to the mockup</strong>
+          </div>
+          <button id="mobileSheetClose" class="mobile-sheet-close" type="button" aria-label="Close">×</button>
+        </div>
+        <div id="mobilePalette" class="mobile-palette"></div>
+      </section>
+    </div>
 
     <section class="recommendation-suite">
       <div class="suite-heading">
