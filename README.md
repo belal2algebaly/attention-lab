@@ -1,31 +1,24 @@
-# Attention Lab V14 — Audited Logic Build
+# Attention Lab V15 — Semantic PDP Audit
 
-Interactive product-page attention and decision-flow simulator.
+Interactive static web app for simulating mobile product-page attention, semantic placement, and decision-flow clarity.
 
-## Audit changes
+## V15 logic audit
 
-- Recalibrated the fold using the actual visible content boundary inside the phone, not the outer screen height.
-- Added continuous action bottlenecks so a deeply buried, hidden, missing, or disconnected CTA cannot be masked by high averages.
-- Replaced exact-distance Gaussian relationship scoring with monotonic proximity decay; close related elements are not punished, while overlap is handled by crowding and occlusion.
-- Normalized relationship distances to the responsive phone width.
-- Removed reassurance elements from the mandatory purchase-stage sequence.
-- Prioritized CTA blockers in the critical banner and shopper reaction.
-- Made hard score ceilings continuous to avoid flat score plateaus during movement.
-- Increased metric display precision to two decimals.
-- Rebuilt presets so optional elements do not overlap on mobile.
-- Added explicit evidence boundaries: indices are heuristic comparison scores, not biometric probabilities or conversion predictions.
+- The engine now understands the role of every element, not only its movement or distance.
+- Discount badges are evaluated as offer context and must remain connected to price and appear before the action.
+- Size charts are evaluated as selection support and must remain attached to variants and before Add to cart.
+- Price is evaluated as early-stage offer information and is penalized when buried or placed after options.
+- Variants must precede and remain connected to Add to cart.
+- CTA depth, visibility, and option-to-action continuity use hard bottleneck rules.
+- Product image, title, and reviews form a flexible identity cluster; title/reviews can appear before the image when the group remains compact and early.
+- Missing required and optional elements are reported separately.
+- The selected element receives a live semantic diagnosis.
+- Attention path order now follows the actual vertical arrangement inside each decision stage.
 
-## Validation performed
+## Scientific note
 
-Tested at desktop and mobile widths for:
+Scores are heuristic comparison indices based on visual grouping, crowding, visibility, task continuity, viewport depth, and interface conventions. They are not biometric eye-tracking probabilities or conversion predictions.
 
-- Default layout
-- All presets
-- CTA placed at the bottom
-- Missing CTA
-- CTA overlapping variants
-- Alternative title/reviews/image ordering
-- One-pixel movement sensitivity
-- JavaScript runtime and syntax errors
+## Deploy
 
-The heatmap and scan path remain simulated educational outputs, not real eye tracking.
+Upload the folder contents to GitHub and deploy as a static project on Vercel. No build command is required.

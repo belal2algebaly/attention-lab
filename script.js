@@ -47,6 +47,15 @@ const relationshipRules = [
   { a: 'cta', b: 'stickyCta', ideal: 190, tolerance: 360, weight: 0.38, label: 'Primary CTA ↔ sticky CTA' }
 ];
 
+// Semantic placement rules model what each PDP element means, not only where it sits.
+// Exact pixel values are responsive heuristics; scores are comparison indices, not human probabilities.
+const semanticRules = {
+  identity: ['image', 'title', 'rating'],
+  required: ['image', 'title', 'price', 'variants', 'cta'],
+  recommended: ['rating', 'discount', 'sizeChart', 'trust', 'shipping', 'returns'],
+  optional: ['stickyCta']
+};
+
 const palette = document.getElementById('palette');
 const screen = document.getElementById('screen');
 const contentLayer = document.getElementById('contentLayer');
@@ -482,6 +491,150 @@ function attentionPotentialScore(per, grouping, fold, spatial) {
 }
 
 
+
+function normalizedVerticalPosition(id) {
+  if (!placed.has(id)) return 1.5;
+  return center(placed.get(id)).y / Math.max(1, viewportBoundary());
+}
+
+function relationDetail(relations, a, b) {
+  return relations.find(r => r.a === a && r.b === b) || relations.find(r => r.a === b && r.b === a);
+}
+
+function proximityScore(relations, a, b) {
+  return relationDetail(relations, a, b)?.score ?? 0;
+}
+
+function orderScore(a, b, softness = 0.07) {
+  if (!placed.has(a) || !placed.has(b)) return 0;
+  const h = Math.max(1, viewportBoundary());
+  const dy = (center(placed.get(b)).y - center(placed.get(a)).y) / h;
+  return sigmoid(dy / softness) * 100;
+}
+
+function earlyPlacementScore(id, preferred = 0.62, decay = 0.42) {
+  if (!placed.has(id)) return 0;
+  const y = normalizedVerticalPosition(id);
+  if (y <= preferred) return 100 - y * 2.5;
+  return clamp(100 * Math.exp(-(y - preferred) / decay), 0, 100);
+}
+
+function nearSameDecisionZone(a, b) {
+  if (!placed.has(a) || !placed.has(b)) return 0;
+  const h = Math.max(1, viewportBoundary());
+  const dy = Math.abs(center(placed.get(a)).y - center(placed.get(b)).y) / h;
+  return clamp(100 * Math.exp(-Math.pow(dy / 0.22, 1.35)), 0, 100);
+}
+
+function semanticPlacementAudit(per, relations) {
+  const scores = {};
+  const violations = [];
+  const notices = [];
+  const y = id => normalizedVerticalPosition(id);
+  const vis = id => (per[id] ?? 0) * 100;
+  const combine = parts => {
+    const valid = parts.filter(v => Number.isFinite(v));
+    if (!valid.length) return 0;
+    // Geometric mean means one badly placed semantic dependency cannot hide behind averages.
+    return Math.exp(valid.reduce((sum, v) => sum + Math.log(Math.max(1, v)), 0) / valid.length);
+  };
+
+  // Identity can be image-first OR title/reviews-first. What matters is a compact, early identity cluster.
+  const identityPresent = semanticRules.identity.filter(id => placed.has(id));
+  const identityEarly = identityPresent.length ? identityPresent.map(id => earlyPlacementScore(id, 0.70, 0.50)) : [0];
+  const identityLinks = [];
+  [['image','title'],['image','rating'],['title','rating']].forEach(([a,b]) => {
+    if (placed.has(a) && placed.has(b)) identityLinks.push(proximityScore(relations,a,b));
+  });
+  const identityScore = combine(identityEarly.concat(identityLinks.length ? identityLinks : [70]));
+  identityPresent.forEach(id => scores[id] = combine([identityScore, vis(id)]));
+
+  if (placed.has('price')) {
+    const identityText = ['title','rating'].filter(id => placed.has(id));
+    const identityBottom = identityText.length ? Math.max(...identityText.map(id => box(placed.get(id)).bottom)) : (placed.has('image') ? box(placed.get('image')).bottom : 0);
+    const priceBox = box(placed.get('price'));
+    const identityRelation = Math.max(proximityScore(relations,'title','price'), placed.has('image') ? nearSameDecisionZone('image','price') : 0);
+    const afterIdentity = sigmoid((priceBox.y - identityBottom + 70) / 35) * 100;
+    scores.price = combine([vis('price'), earlyPlacementScore('price',0.88,0.38), identityRelation, afterIdentity]);
+    if (y('price') > 1.12) violations.push({severity:'high', id:'price', text:'Price is too deep. It should appear in the early evaluation area, close to product identity.'});
+    if (placed.has('variants') && orderScore('price','variants') < 55) violations.push({severity:'high', id:'price', text:'Price should be understood before the shopper reaches product options.'});
+  } else scores.price = 0;
+
+  if (placed.has('discount')) {
+    const closeToPrice = proximityScore(relations,'price','discount');
+    const sameZone = nearSameDecisionZone('price','discount');
+    const beforeChoice = placed.has('variants') ? orderScore('discount','variants') : 100;
+    const beforeAction = placed.has('cta') ? orderScore('discount','cta') : 100;
+    scores.discount = combine([vis('discount'), closeToPrice, sameZone, beforeChoice, beforeAction]);
+    if (!placed.has('price')) violations.push({severity:'high', id:'discount', text:'Discount badge has no price to qualify, so its meaning is disconnected.'});
+    else if (closeToPrice < 68 || sameZone < 65) violations.push({severity:'high', id:'discount', text:'Discount badge should sit beside or directly around the price, not as a separate section.'});
+    if (placed.has('cta') && center(placed.get('discount')).y > box(placed.get('cta')).bottom) violations.push({severity:'high', id:'discount', text:'Discount badge appears after Add to cart. Offer context should be understood before the action.'});
+  }
+
+  if (placed.has('variants')) {
+    scores.variants = combine([vis('variants'), earlyPlacementScore('variants',1.18,0.50), placed.has('price') ? orderScore('price','variants') : 0]);
+    if (placed.has('price') && orderScore('price','variants') < 55) violations.push({severity:'high', id:'variants', text:'Variants appear before the price is clearly evaluated.'});
+    if (placed.has('cta') && orderScore('variants','cta') < 55) violations.push({severity:'critical', id:'variants', text:'Product options must come before Add to cart.'});
+  } else scores.variants = 0;
+
+  if (placed.has('sizeChart')) {
+    const close = proximityScore(relations,'variants','sizeChart');
+    const sameZone = nearSameDecisionZone('variants','sizeChart');
+    const beforeAction = placed.has('cta') ? orderScore('sizeChart','cta') : 100;
+    scores.sizeChart = combine([vis('sizeChart'), close, sameZone, beforeAction]);
+    if (!placed.has('variants')) violations.push({severity:'high', id:'sizeChart', text:'Size chart is present without a size or option selector.'});
+    else if (close < 72 || sameZone < 68) violations.push({severity:'high', id:'sizeChart', text:'Size chart should be attached to the size/options decision, not placed elsewhere on the page.'});
+    if (placed.has('cta') && center(placed.get('sizeChart')).y > box(placed.get('cta')).bottom) violations.push({severity:'high', id:'sizeChart', text:'Size guidance appears after Add to cart, when it is already too late to support selection.'});
+  } else if (placed.has('variants')) notices.push('Size chart is not placed. Add it when sizing uncertainty is relevant to the product.');
+
+  if (placed.has('cta')) {
+    const pair = proximityScore(relations,'variants','cta');
+    const afterVariants = placed.has('variants') ? orderScore('variants','cta') : 0;
+    scores.cta = combine([vis('cta'), foldScoreFor('cta'), pair, afterVariants]);
+    if (placed.has('variants') && pair < 62) violations.push({severity:'critical', id:'cta', text:'Add to cart is disconnected from the option-selection area.'});
+    if (foldScoreFor('cta') < 42) violations.push({severity:'critical', id:'cta', text:'Add to cart is too deep to provide a clear next action.'});
+  } else scores.cta = 0;
+
+  if (placed.has('rating')) {
+    scores.rating = combine([vis('rating'), earlyPlacementScore('rating',0.82,0.55), Math.max(proximityScore(relations,'title','rating'), proximityScore(relations,'image','rating'))]);
+  } else notices.push('Reviews are not placed. Social proof is recommended when rating data exists.');
+
+  ['trust','shipping','returns'].forEach(id => {
+    if (!placed.has(id)) {
+      notices.push(`${labelFor(id)} is not placed. It is optional, but can reduce uncertainty when relevant.`);
+      return;
+    }
+    const anchor = id === 'returns' && placed.has('shipping') ? 'shipping' : 'cta';
+    const relation = anchor === 'shipping' ? proximityScore(relations,'shipping','returns') : proximityScore(relations,'cta',id);
+    const notTooEarly = placed.has('cta') ? sigmoid((center(placed.get(id)).y - center(placed.get('cta')).y + 130) / 55) * 100 : 55;
+    scores[id] = combine([vis(id), relation, notTooEarly]);
+    if (placed.has('cta') && relation < 52) violations.push({severity:'medium', id, text:`${labelFor(id)} should support the purchase area rather than appear as unrelated content.`});
+  });
+
+  if (placed.has('stickyCta')) {
+    const boundary = viewportBoundary();
+    const stickyY = box(placed.get('stickyCta')).bottom;
+    const viewportBottomFit = clamp(100 * Math.exp(-Math.abs(stickyY - boundary) / Math.max(50,boundary*.28)),0,100);
+    scores.stickyCta = combine([vis('stickyCta'), viewportBottomFit]);
+    if (viewportBottomFit < 55) violations.push({severity:'medium', id:'stickyCta', text:'Sticky CTA should behave like a viewport action bar, not ordinary page content.'});
+  }
+
+  semanticRules.required.forEach(id => {
+    if (!placed.has(id)) violations.push({severity:'critical', id, text:`${labelFor(id)} is missing from the product decision flow.`});
+  });
+
+  const missing = defs.filter(d => !placed.has(d.id)).map(d => d.label);
+  if (missing.length) notices.unshift(`Missing from the canvas: ${missing.join(', ')}.`);
+
+  const weights = {image:.8,title:1, rating:.55,price:1.2,discount:.65,variants:1.2,sizeChart:.7,cta:1.35,trust:.45,shipping:.55,returns:.4,stickyCta:.35};
+  let total=0, weight=0;
+  Object.entries(scores).forEach(([id,score])=>{ const w=weights[id]||.5; total+=score*w; weight+=w; });
+  let overall = weight ? total/weight : 0;
+  const severityPenalty = violations.reduce((sum,v)=>sum+({critical:13,high:8,medium:4}[v.severity]||2),0);
+  overall = clamp(overall-severityPenalty,0,100);
+  return {overall,scores,violations,notices};
+}
+
 function criticalCoverageScore(per) {
   let total = 0;
   let weights = 0;
@@ -589,8 +742,9 @@ function applyHardConstraints(score, per) {
   return clamp(adjusted, 0, 100);
 }
 
-function buildReactions(per, relations, metrics) {
+function buildReactions(per, relations, metrics, semanticAudit) {
   const reactions = [];
+  semanticAudit.violations.slice().sort((a,b)=>({critical:0,high:1,medium:2}[a.severity]-{critical:0,high:1,medium:2}[b.severity])).slice(0,3).forEach(v=>reactions.push(v.text));
   const weakestRelation = [...relations].sort((a, b) => a.score - b.score)[0];
   if (weakestRelation && weakestRelation.score < 62) {
     reactions.push(`${weakestRelation.label} feels disconnected (${Math.round(weakestRelation.gap)}px edge gap).`);
@@ -630,6 +784,7 @@ function scientificReasons(metrics, relations, per) {
   }
   if (metrics.action < 78) reasons.push('Action readiness uses a bottleneck rule: CTA visibility, depth, option-to-action proximity, and selection availability must all remain usable.');
   if (metrics.continuity < 78) reasons.push('Decision continuity uses a geometric mean so one broken stage cannot be hidden by high averages elsewhere.');
+  if (metrics.spatial < 82) reasons.push('Semantic placement checks each element by role: offer context stays with price, selection help stays with variants, and purchase support stays near the action zone.');
   if (modeSelect.value === 'gutenberg') {
     reasons.push('Gutenberg contributes only as a comparison heuristic and cannot override missing or obscured task-critical elements.');
   }
@@ -639,8 +794,10 @@ function scientificReasons(metrics, relations, per) {
 
 function drawPath(per) {
   pathLayer.innerHTML = '';
-  let ids = taskPath.filter(id => placed.has(id) && (per[id] ?? 1) > 0.45);
-  if (modeSelect.value === 'gutenberg') ids = ['title', 'image', 'price', 'cta'].filter(id => placed.has(id) && (per[id] ?? 1) > 0.45);
+  let ids = stages.flatMap(stage => stage.filter(id => placed.has(id) && (per[id] ?? 1) > 0.45).sort((a,b)=>center(placed.get(a)).y-center(placed.get(b)).y));
+  const support = ['trust','shipping','returns'].filter(id => placed.has(id) && (per[id] ?? 1) > 0.45).sort((a,b)=>center(placed.get(a)).y-center(placed.get(b)).y);
+  ids = ids.concat(support.filter(id => !ids.includes(id)));
+  if (modeSelect.value === 'gutenberg') ids = ['title', 'image', 'price', 'cta'].filter(id => placed.has(id) && (per[id] ?? 1) > 0.45).sort((a,b)=>center(placed.get(a)).y-center(placed.get(b)).y);
   if (ids.length < 2) return;
 
   const ns = 'http://www.w3.org/2000/svg';
@@ -749,7 +906,9 @@ function analyze() {
   const visibility = weightedVisibility(per);
   const grouping = groupingScoreContinuous(relations);
   const fold = weightedFoldDiscoverability();
-  const spatial = spatialExpectationScore(relations);
+  const spatialBase = spatialExpectationScore(relations);
+  const semanticAudit = semanticPlacementAudit(per, relations);
+  const spatial = 0.32 * spatialBase + 0.68 * semanticAudit.overall;
   const relationship = relationshipIntegrityScore(relations, per);
   const sequence = sequenceScoreContinuous();
   const scan = scanEfficiencyScore();
@@ -762,6 +921,11 @@ function analyze() {
   const metrics = { visibility, grouping, fold, spatial, relationship, sequence, scan, crowding, attention, action, continuity, critical: criticalCoverage };
   let composite = applyHardConstraints(modeScore(metrics), per);
   composite = taskFailureCaps(composite, metrics, per);
+  const semanticCritical = semanticAudit.violations.filter(v => v.severity === 'critical');
+  const semanticHigh = semanticAudit.violations.filter(v => v.severity === 'high');
+  if (semanticCritical.length) composite = Math.min(composite, 44);
+  else if (semanticHigh.length >= 2) composite = Math.min(composite, 58);
+  else if (semanticHigh.length === 1) composite = Math.min(composite, 69);
   composite = clamp(composite, 0, 100);
   lastComposite = composite;
 
@@ -783,7 +947,11 @@ function analyze() {
     else if ((per[id] ?? 1) < 0.85) critical.push(`${labelFor(id)} is ${Math.round((1 - per[id]) * 100)}% hidden.`);
   });
 
+  semanticAudit.violations.filter(v => v.severity === 'critical').forEach(v => critical.push(v.text));
+
   const findings = [];
+  semanticAudit.violations.filter(v => v.severity !== 'critical').forEach(v => findings.push(v.text));
+  semanticAudit.notices.slice(0, 3).forEach(v => findings.push(v));
   const weakestRelations = [...relations].sort((a, b) => a.score - b.score).slice(0, 2);
   weakestRelations.forEach(r => {
     if (r.score < 72) findings.push(`Reduce the ${Math.round(r.gap)}px edge gap for ${r.label}; current relationship score is ${r.score.toFixed(1)}.`);
@@ -799,10 +967,10 @@ function analyze() {
   if (modeSelect.value === 'gutenberg') findings.push('Treat Gutenberg as a comparison heuristic only; product-task constraints remain primary.');
   if (!critical.length && findings.length === 0) findings.push('The current layout has strong continuous scores across visibility, flow, grouping, and relationship integrity.');
 
-  const reactions = buildReactions(per, relations, metrics);
+  const reactions = buildReactions(per, relations, metrics, semanticAudit);
   const evidence = scientificReasons(metrics, relations, per);
 
-  updateUI({ composite, metrics, critical, findings: uniq(findings).slice(0, 7), reactions, evidence });
+  updateUI({ composite, metrics, critical, findings: uniq(findings).slice(0, 9), reactions, evidence, semanticAudit });
   drawPath(per);
   drawHeatmap(per, metrics);
 }
@@ -827,7 +995,7 @@ function updateCharacter(score, critical, reactions) {
   let quoteText = 'I need to look around before I can decide.';
   let subText = reactions[0] || 'Small spatial changes are affecting the model continuously.';
 
-  if (critical.some(x => /Add to cart|Variants and Add/i.test(x))) {
+  if (critical.some(x => /Add to cart|Product options must|Variants and Add/i.test(x))) {
     state = 'critical';
     moodText = 'Blocked';
     quoteText = reactions.find(x => /purchase action|next action|explains the product/i.test(x)) || 'I cannot complete the purchase from here.';
@@ -846,6 +1014,11 @@ function updateCharacter(score, critical, reactions) {
     moodText = 'Confused';
     quoteText = reactions[0] || 'I cannot find the information I need.';
     subText = 'Critical content is missing, hidden, crowded, or disconnected.';
+  } else if (score < 70 && reactions.length) {
+    state = 'hesitant';
+    moodText = 'Hesitant';
+    quoteText = reactions[0];
+    subText = 'The element exists, but its semantic position does not support the decision at the right moment.';
   }
 
   stage.dataset.mood = state;
@@ -871,6 +1044,21 @@ function updateDelta(score) {
   el.className = `live-delta ${delta > 0.005 ? 'positive' : delta < -0.005 ? 'negative' : 'neutral'}`;
 }
 
+
+function updateElementDiagnosis(r) {
+  const el = document.getElementById('elementDiagnosis');
+  if (!el) return;
+  if (!selectedElementId) {
+    el.textContent = 'Select an element to see whether its meaning, order, and relationships are correct.';
+    return;
+  }
+  const score = r.semanticAudit?.scores?.[selectedElementId];
+  const issue = r.semanticAudit?.violations?.find(v => v.id === selectedElementId);
+  if (issue) el.textContent = issue.text;
+  else if (Number.isFinite(score)) el.textContent = `${labelFor(selectedElementId)} semantic placement: ${score.toFixed(1)} / 100.`;
+  else el.textContent = `${labelFor(selectedElementId)} is not currently part of the active layout.`;
+}
+
 function updateUI(r) {
   const score = r.composite;
   document.getElementById('score').textContent = fmt(score);
@@ -891,6 +1079,7 @@ function updateUI(r) {
   document.getElementById('criticalCoverage').textContent = fmt(r.metrics.critical);
   updateActiveLabel();
   updateDelta(score);
+  updateElementDiagnosis(r);
 
   const criticalBanner = document.getElementById('criticalBanner');
   criticalBanner.hidden = !r.critical.length;
@@ -902,7 +1091,7 @@ function updateUI(r) {
     score >= 50 ? 'The shopper needs extra scanning to reconstruct relationships between important elements.' :
     'Critical information is missing, obscured, crowded, or placed in a high-cost decision path.';
 
-  updateList('findings', r.critical.concat(r.findings).slice(0, 7));
+  updateList('findings', r.critical.concat(r.findings).slice(0, 9));
   updateList('reactions', r.reactions);
   updateList('evidenceList', r.evidence);
   updateCharacter(score, r.critical, r.reactions);

@@ -167,3 +167,5 @@ dialog{max-width:720px;border:1px solid var(--line-strong);border-radius:20px;pa
   .character-zone{grid-template-columns:84px 1fr}.shopper-svg{width:84px;height:112px}
   .metric-row div{padding:8px 6px}.metric-row strong{font-size:14px}
 }
+
+.element-diagnosis{margin:10px 0 0;padding:10px 11px;border-radius:12px;background:#fff;border:1px solid var(--line);font-size:10px;line-height:1.45;color:#4f4940}
