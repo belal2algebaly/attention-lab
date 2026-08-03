@@ -1,4 +1,4 @@
-# Attention Lab V6
+# Attention Lab V7
 
 A polished interactive product-page attention simulator.
 
@@ -19,3 +19,9 @@ A polished interactive product-page attention simulator.
 - No build command required
 
 The reading path and heatmap are educational simulations, not biometric eye tracking.
+
+
+## V7 layout fixes
+- Desktop uses two comfortable columns; recommendations span full width below.
+- Mobile opens with a compact header and compact analysis controls.
+- Shopper character is reduced only on mobile to keep the phone visible sooner.

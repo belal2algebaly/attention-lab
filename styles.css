@@ -208,3 +208,112 @@ dialog h2{margin:8px 0 10px}dialog>p{color:var(--muted);font-size:12px;line-heig
 @keyframes shakeBubble{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
 @media(max-width:760px){.summary-grid{grid-template-columns:1fr}.character-stage{min-height:auto}.toolbar-controls{grid-template-columns:1fr 1fr}.toolbar-controls select:first-child{grid-column:1/-1}}
 @media(max-width:420px){.toolbar-controls{grid-template-columns:1fr}.toolbar-controls select:first-child{grid-column:auto}}
+
+/* V7 layout correction: preserve workspace breathing room */
+@media (min-width:1221px){
+  .workspace{
+    grid-template-columns:minmax(760px,1fr) 300px;
+    grid-template-areas:
+      "phone palette"
+      "recommend recommend";
+  }
+  .phone-panel{grid-area:phone}
+  .palette-panel{grid-area:palette;position:sticky;top:14px;max-height:calc(100vh - 28px);overflow:auto}
+  .recommendation-panel{grid-area:recommend}
+  .phone-and-summary{grid-template-columns:minmax(390px,450px) minmax(300px,1fr);gap:22px}
+  .recommendation-panel{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;
+  }
+  .recommendation-panel>.panel-title{grid-column:1/-1;margin-bottom:0}
+  .recommendation-panel .reading-card,
+  .recommendation-panel .decision-summary{margin:0}
+  .recommendation-panel .findings,
+  .recommendation-panel .evidence-box{margin:0}
+}
+
+@media (max-width:760px){
+  body{background:#f6f4ef}
+  .app{padding:8px}
+  .hero{
+    min-height:0;
+    padding:10px 12px;
+    margin-bottom:8px;
+    flex-direction:row;
+    align-items:center;
+    position:relative;
+  }
+  .hero .kicker,.hero p{display:none}
+  .hero h1{font-size:24px;margin:0;line-height:1}
+  .hero-actions{width:auto;margin-left:auto;gap:6px}
+  .hero-actions .btn{flex:none;padding:8px 10px;font-size:0;border-radius:10px}
+  .hero-actions .btn::after{font-size:12px}
+  #resetBtn::after{content:"Reset"}
+  #methodBtn::after{content:"Basis"}
+  .toolbar{
+    padding:8px;
+    margin-bottom:8px;
+    border-radius:14px;
+  }
+  .toolbar>div:first-child{display:none}
+  .toolbar-controls{
+    display:grid;
+    grid-template-columns:1fr 1fr 46px;
+    gap:6px;
+  }
+  .toolbar select{padding:9px 8px;font-size:12px;border-radius:10px}
+  .icon-toggle{padding:8px;justify-content:center}
+  .icon-toggle>span:last-child{display:none}
+  .eye-icon{width:22px;height:22px}
+  .workspace{gap:8px}
+  .phone-panel{order:1;padding:10px}
+  .palette-panel{order:2;padding:10px}
+  .recommendation-panel{order:3;padding:10px}
+  .phone-panel .panel-title{margin-bottom:8px}
+  .panel-title>span{width:22px;height:22px}
+  .panel-title h2{font-size:15px}
+  .panel-title p{font-size:10px}
+  .phone-and-summary{gap:10px}
+  .results-rail{gap:8px}
+  .character-stage{
+    grid-template-columns:106px 1fr;
+    min-height:0;
+    padding:10px;
+    text-align:left;
+    justify-items:stretch;
+  }
+  .character-figure{height:132px}
+  .character-head{width:72px;height:77px}
+  .character-hair{top:18px;left:22px;width:67px;height:36px}
+  .eye{top:37px;width:8px;height:8px}
+  .eye.left{left:20px}.eye.right{right:20px}
+  .brow{top:28px;width:14px}.brow-left{left:17px}.brow-right{right:17px}
+  .mouth{top:56px;width:21px;height:9px}
+  .character-neck{bottom:55px}
+  .character-torso{width:90px;height:72px;bottom:2px}
+  .speech-bubble{padding:11px;border-radius:14px}
+  .speech-bubble strong{font-size:13px;margin-bottom:4px}
+  .speech-bubble p{font-size:10px;line-height:1.35}
+  .mood-tag{font-size:8px;padding:4px 6px;margin-bottom:6px}
+  .score-block{padding:10px}
+  .score-head strong{font-size:22px}
+  .reaction-box{display:none}
+  .phone-help{font-size:9px}
+  .recommendation-panel .panel-title{margin-bottom:8px}
+  .reading-card,.findings,.decision-summary,.evidence-box{margin-bottom:8px}
+}
+
+@media (max-width:430px){
+  .hero-actions .btn{padding:7px 8px}
+  .toolbar-controls{grid-template-columns:1fr 44px}
+  .toolbar-controls select:first-child{display:none}
+  .character-stage{grid-template-columns:92px 1fr}
+  .character-figure{height:118px}
+  .character-head{width:66px;height:70px}
+  .character-hair{top:17px;left:20px;width:62px;height:33px}
+  .speech-bubble strong{font-size:12px}
+  .speech-bubble p{display:none}
+  .metrics{gap:5px}
+  .metrics div{padding:7px 5px}
+}
