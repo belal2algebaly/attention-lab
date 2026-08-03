@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Interactive product-page attention simulator with live UX feedback, simulated heatmap, and scientific recommendations." />
-  <title>Attention Lab V9</title>
+  <title>Attention Lab V10</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -69,22 +69,29 @@
 
         <div class="experience-stage">
           <div class="phone-column">
-            <div class="phone">
-              <div class="notch"></div>
-              <div id="screen" class="screen">
-                <header class="store-header">
-                  <button type="button" aria-label="Back">‹</button>
-                  <strong>NOVA</strong>
-                  <button type="button" aria-label="Cart">Bag</button>
-                </header>
-                <div class="viewport-marker"><span>Visible before scroll</span></div>
-                <div id="contentLayer" class="content-layer">
-                  <div class="screen-grid"></div>
-                  <svg id="pathLayer" class="path-layer" aria-hidden="true"></svg>
-                  <div id="heatmapLayer" class="heatmap-layer" aria-hidden="true"></div>
-                  <div id="emptyHint" class="empty-hint">Add elements from the library</div>
+            <div class="phone-shell">
+              <div class="phone">
+                <div class="notch"></div>
+                <div class="side-button"></div>
+                <div id="screen" class="screen">
+                  <header class="store-header">
+                    <button type="button" aria-label="Back">‹</button>
+                    <strong>NOVA</strong>
+                    <button type="button" aria-label="Cart">Bag</button>
+                  </header>
+                  <div class="viewport-marker"><span>Visible before scroll</span></div>
+                  <div id="contentLayer" class="content-layer">
+                    <div class="screen-grid"></div>
+                    <svg id="pathLayer" class="path-layer" aria-hidden="true"></svg>
+                    <div id="heatmapLayer" class="heatmap-layer" aria-hidden="true"></div>
+                    <div id="emptyHint" class="empty-hint">Add elements from the library</div>
+                  </div>
                 </div>
               </div>
+            </div>
+            <div class="overlay-guide" aria-hidden="true">
+              <span><i class="guide path"></i> Attention path</span>
+              <span><i class="guide heat"></i> Heatmap</span>
             </div>
             <p class="phone-help">Drag elements inside the phone. Double-click to remove. The phone itself scrolls.</p>
           </div>

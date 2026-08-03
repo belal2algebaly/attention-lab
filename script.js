@@ -47,19 +47,18 @@ const presets = {
   contentHeavy: {image:[16,22],title:[16,258],rating:[16,314],price:[16,360],discount:[235,360],variants:[16,430],sizeChart:[220,436],shipping:[16,500],returns:[16,560],trust:[16,620],cta:[16,690]}
 };
 
-function applyPreset(name){
-  if(!presets[name]) return;
-  [...placed.values()].forEach(el=>el.remove());
+function applyPreset(name) {
+  if (!presets[name]) return;
+  [...placed.values()].forEach(el => el.remove());
   placed.clear();
-  Object.entries(presets[name]).forEach(([id,pos])=>add(id,pos[0],pos[1]));
-  screen.scrollTop=0;
+  Object.entries(presets[name]).forEach(([id, pos]) => add(id, pos[0], pos[1]));
+  screen.scrollTop = 0;
   schedule();
 }
 
-
-function clamp(v, min, max) {
-  return Math.max(min, Math.min(max, v));
-}
+function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+function uniq(arr) { return [...new Set(arr)]; }
+function labelFor(id) { return defs.find(d => d.id === id)?.label || id; }
 
 function schedule() {
   if (raf) return;
@@ -91,9 +90,7 @@ function overlap(a, b) {
   return w * h;
 }
 
-function dist(a, b) {
-  return Math.hypot(a.x - b.x, a.y - b.y);
-}
+function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
 
 function renderPalette() {
   palette.innerHTML = '';
@@ -121,10 +118,7 @@ function renderPalette() {
 }
 
 function syncPalette() {
-  document.querySelectorAll('.palette-item').forEach(el => {
-    const used = placed.has(el.dataset.id);
-    el.classList.toggle('used', used);
-  });
+  document.querySelectorAll('.palette-item').forEach(el => el.classList.toggle('used', placed.has(el.dataset.id)));
   emptyHint.style.display = placed.size ? 'none' : 'grid';
 }
 
@@ -157,8 +151,7 @@ function add(id, x, y) {
 }
 
 function remove(id) {
-  const el = placed.get(id);
-  if (el) el.remove();
+  placed.get(id)?.remove();
   placed.delete(id);
   syncPalette();
   schedule();
@@ -168,6 +161,7 @@ function reset() {
   [...placed.values()].forEach(el => el.remove());
   placed.clear();
   Object.entries(initialDefaults).forEach(([id, pos]) => add(id, pos[0], pos[1]));
+  presetSelect.value = 'custom';
   screen.scrollTop = 0;
   schedule();
 }
@@ -176,39 +170,47 @@ contentLayer.addEventListener('dragover', e => e.preventDefault());
 contentLayer.addEventListener('drop', e => {
   e.preventDefault();
   if (!dragId) return;
+  presetSelect.value = 'custom';
   const rect = contentLayer.getBoundingClientRect();
-  const x = e.clientX - rect.left - 70;
+  const x = e.clientX - rect.left - 74;
   const y = e.clientY - rect.top - 24 + screen.scrollTop;
   add(dragId, x, y);
+  dragId = null;
 });
 
 function startDrag(e) {
-  presetSelect.value='custom';
   if (e.button !== undefined && e.button !== 0) return;
+  presetSelect.value = 'custom';
   const el = e.currentTarget;
-  const rect = el.getBoundingClientRect();
   active = {
     el,
-    dx: e.clientX - rect.left,
-    dy: e.clientY - rect.top
+    startLeft: parseFloat(el.style.left) || 0,
+    startTop: parseFloat(el.style.top) || 0,
+    startPointerX: e.clientX,
+    startPointerY: e.clientY,
+    startScroll: screen.scrollTop,
+    pointerId: e.pointerId
   };
   el.classList.add('dragging');
   el.setPointerCapture?.(e.pointerId);
-  document.addEventListener('pointermove', moveDrag);
+  e.preventDefault();
+  document.addEventListener('pointermove', moveDrag, { passive: false });
   document.addEventListener('pointerup', endDrag, { once: true });
 }
 
 function moveDrag(e) {
   if (!active) return;
-  const layerRect = contentLayer.getBoundingClientRect();
+  e.preventDefault();
+  autoScrollScreen(e.clientY);
+
   const el = active.el;
-  const x = e.clientX - layerRect.left - active.dx;
-  const y = e.clientY - layerRect.top - active.dy + screen.scrollTop;
+  const deltaX = e.clientX - active.startPointerX;
+  const deltaY = e.clientY - active.startPointerY + (screen.scrollTop - active.startScroll);
   const maxX = contentLayer.clientWidth - el.offsetWidth - 8;
   const maxY = contentLayer.scrollHeight - el.offsetHeight - 8;
-  el.style.left = clamp(x, 6, maxX) + 'px';
-  el.style.top = clamp(y, 10, maxY) + 'px';
-  autoScrollScreen(e.clientY);
+
+  el.style.left = clamp(active.startLeft + deltaX, 6, maxX) + 'px';
+  el.style.top = clamp(active.startTop + deltaY, 10, maxY) + 'px';
   schedule();
 }
 
@@ -235,23 +237,18 @@ function visibilityMap() {
     for (let j = i + 1; j < entries.length; j++) {
       const [aId, aEl] = entries[i];
       const [bId, bEl] = entries[j];
-      const a = box(aEl);
-      const b = box(bEl);
-      const area = overlap(a, b);
+      const area = overlap(box(aEl), box(bEl));
       if (!area) continue;
-      per[aId] = Math.max(0, per[aId] - area / (a.w * a.h));
-      per[bId] = Math.max(0, per[bId] - area / (b.w * b.h));
+      per[aId] = Math.max(0, per[aId] - area / (aEl.offsetWidth * aEl.offsetHeight));
+      per[bId] = Math.max(0, per[bId] - area / (bEl.offsetWidth * bEl.offsetHeight));
     }
   }
-
   return per;
 }
 
 function visibleBeforeScroll(id) {
   if (!placed.has(id)) return false;
-  const el = placed.get(id);
-  const b = box(el);
-  return b.y < 620;
+  return box(placed.get(id)).y < 530;
 }
 
 function applyOcclusionStyles(per) {
@@ -267,14 +264,12 @@ function sequenceScore() {
   const present = recommendedTaskOrder.filter(id => placed.has(id));
   if (present.length < 2) return 0;
   let good = 0;
-  let max = 0;
   for (let i = 1; i < present.length; i++) {
     const prev = center(placed.get(present[i - 1]));
     const next = center(placed.get(present[i]));
-    max += 1;
-    if (next.y >= prev.y - 14) good += 1;
+    if (next.y >= prev.y - 14) good++;
   }
-  return Math.round((good / max) * 100);
+  return Math.round((good / (present.length - 1)) * 100);
 }
 
 function groupingScore() {
@@ -290,8 +285,7 @@ function groupingScore() {
   const vals = pairs
     .filter(([a, b]) => placed.has(a) && placed.has(b))
     .map(([a, b]) => clamp(120 - (dist(center(placed.get(a)), center(placed.get(b))) / 3), 0, 100));
-  if (!vals.length) return 0;
-  return Math.round(vals.reduce((s, v) => s + v, 0) / vals.length);
+  return vals.length ? Math.round(vals.reduce((s, v) => s + v, 0) / vals.length) : 0;
 }
 
 function buildReactions(per) {
@@ -301,22 +295,18 @@ function buildReactions(per) {
     const d = dist(center(placed.get('sizeChart')), center(placed.get('variants')));
     if (d > 220) reactions.push('Where is the size chart? I expect it next to the variants, not far away.');
   }
-
   if (placed.has('price') && placed.has('title')) {
     const d = dist(center(placed.get('price')), center(placed.get('title')));
     if (d > 220) reactions.push('I found the product name, but I had to search for the price.');
   }
-
   if (placed.has('cta') && placed.has('variants')) {
     const d = dist(center(placed.get('cta')), center(placed.get('variants')));
     if (d > 220) reactions.push('The purchase button feels disconnected from the option selection.');
   }
-
   if (placed.has('shipping') && placed.has('cta')) {
     const d = dist(center(placed.get('shipping')), center(placed.get('cta')));
     if (d > 260) reactions.push('I want shipping details closer to the decision zone.');
   }
-
   if (placed.has('returns') && placed.has('cta')) {
     const d = dist(center(placed.get('returns')), center(placed.get('cta')));
     if (d > 280) reactions.push('I’m unsure about returns because the policy feels too far away.');
@@ -335,48 +325,14 @@ function buildReactions(per) {
   return uniq(reactions).slice(0, 6);
 }
 
-function labelFor(id) {
-  return defs.find(d => d.id === id)?.label || id;
-}
-
-function uniq(arr) {
-  return [...new Set(arr)];
-}
-
-function grade(n) {
-  if (n >= 85) return 'Strong';
-  if (n >= 70) return 'Good';
-  if (n >= 50) return 'Needs work';
-  return 'Critical';
-}
-
 function evidenceFor(findings, critical) {
   const evidence = [];
-
-  if (critical.length) {
-    evidence.push('Visibility and visual crowding: hidden or overlapped critical content cannot support a clear decision.');
-  }
-
-  if (findings.some(f => /size chart|variants|price|purchase button|decision zone/i.test(f))) {
-    evidence.push('Gestalt proximity / grouping: related elements are easier to interpret when they are near one another.');
-  }
-
-  if (findings.some(f => /before scrolling|viewport/i.test(f))) {
-    evidence.push('Initial viewport attention: early-visible information is easier to discover in the first scan.');
-  }
-
-  if (findings.some(f => /search|sequence|disconnected|next step/i.test(f))) {
-    evidence.push('Task-flow support and information scent: shoppers move better when the sequence of information matches the purchase task.');
-  }
-
-  if (modeSelect.value === 'gutenberg') {
-    evidence.push('Gutenberg diagram is included as a comparison heuristic only, not as a universal law.');
-  }
-
-  if (!evidence.length) {
-    evidence.push('All major recommendations currently align with visibility, grouping, and task-flow support.');
-  }
-
+  if (critical.length) evidence.push('Visibility and visual crowding: hidden or overlapped critical content cannot support a clear decision.');
+  if (findings.some(f => /size chart|variants|price|purchase button|decision zone/i.test(f))) evidence.push('Gestalt proximity / grouping: related elements are easier to interpret when they are near one another.');
+  if (findings.some(f => /before scrolling|viewport/i.test(f))) evidence.push('Initial viewport attention: early-visible information is easier to discover in the first scan.');
+  if (findings.some(f => /search|sequence|disconnected|next step/i.test(f))) evidence.push('Task-flow support and information scent: shoppers move better when the sequence of information matches the purchase task.');
+  if (modeSelect.value === 'gutenberg') evidence.push('Gutenberg diagram is included as a comparison heuristic only, not as a universal law.');
+  if (!evidence.length) evidence.push('All major recommendations currently align with visibility, grouping, and task-flow support.');
   return uniq(evidence).slice(0, 5);
 }
 
@@ -422,24 +378,44 @@ function drawPath(per) {
 
   const ns = 'http://www.w3.org/2000/svg';
   const pts = ids.map(id => center(placed.get(id)));
+
+  const under = document.createElementNS(ns, 'polyline');
+  under.setAttribute('points', pts.map(p => `${p.x},${p.y}`).join(' '));
+  under.setAttribute('fill', 'none');
+  under.setAttribute('stroke', 'rgba(220,231,138,.50)');
+  under.setAttribute('stroke-width', '9');
+  under.setAttribute('stroke-linecap', 'round');
+  under.setAttribute('stroke-linejoin', 'round');
+  pathLayer.appendChild(under);
+
   const line = document.createElementNS(ns, 'polyline');
   line.setAttribute('points', pts.map(p => `${p.x},${p.y}`).join(' '));
   line.setAttribute('fill', 'none');
-  line.setAttribute('stroke', '#1f211c');
-  line.setAttribute('stroke-width', '2');
-  line.setAttribute('stroke-dasharray', '5 6');
-  line.setAttribute('opacity', '.55');
+  line.setAttribute('stroke', '#8d8578');
+  line.setAttribute('stroke-width', '3');
+  line.setAttribute('stroke-dasharray', '6 6');
+  line.setAttribute('stroke-linecap', 'round');
+  line.setAttribute('stroke-linejoin', 'round');
   pathLayer.appendChild(line);
 
   pts.forEach((p, i) => {
-    const c = document.createElementNS(ns, 'circle');
-    c.setAttribute('cx', p.x);
-    c.setAttribute('cy', p.y);
-    c.setAttribute('r', '11');
-    c.setAttribute('fill', '#dfff3f');
-    c.setAttribute('stroke', '#1f211c');
-    c.setAttribute('stroke-width', '1.2');
-    pathLayer.appendChild(c);
+    const ring = document.createElementNS(ns, 'circle');
+    ring.setAttribute('cx', p.x);
+    ring.setAttribute('cy', p.y);
+    ring.setAttribute('r', '14');
+    ring.setAttribute('fill', 'rgba(220,231,138,.82)');
+    ring.setAttribute('stroke', '#c7d36a');
+    ring.setAttribute('stroke-width', '1');
+    pathLayer.appendChild(ring);
+
+    const core = document.createElementNS(ns, 'circle');
+    core.setAttribute('cx', p.x);
+    core.setAttribute('cy', p.y);
+    core.setAttribute('r', '10');
+    core.setAttribute('fill', '#fffcef');
+    core.setAttribute('stroke', '#8d8578');
+    core.setAttribute('stroke-width', '1.2');
+    pathLayer.appendChild(core);
 
     const t = document.createElementNS(ns, 'text');
     t.setAttribute('x', p.x);
@@ -447,6 +423,7 @@ function drawPath(per) {
     t.setAttribute('text-anchor', 'middle');
     t.setAttribute('font-size', '9');
     t.setAttribute('font-weight', '800');
+    t.setAttribute('fill', '#595449');
     t.textContent = i + 1;
     pathLayer.appendChild(t);
   });
@@ -454,22 +431,15 @@ function drawPath(per) {
 
 function attentionWeight(id, per) {
   let w = 0;
-  const vis = (per[id] ?? 0);
+  const vis = per[id] ?? 0;
   const visibleBoost = visibleBeforeScroll(id) ? 18 : 0;
   const base = {
     image: 22, title: 18, rating: 10, price: 16, discount: 10, variants: 15,
     sizeChart: 8, trust: 7, shipping: 7, returns: 6, cta: 20, stickyCta: 14
   }[id] || 5;
   w += base + visibleBoost + (vis * 28);
-
-  if (id === 'sizeChart' && placed.has('variants')) {
-    const d = dist(center(placed.get('sizeChart')), center(placed.get('variants')));
-    w += clamp(14 - (d / 22), -8, 10);
-  }
-  if (id === 'cta' && placed.has('variants')) {
-    const d = dist(center(placed.get('cta')), center(placed.get('variants')));
-    w += clamp(16 - (d / 18), -10, 12);
-  }
+  if (id === 'sizeChart' && placed.has('variants')) w += clamp(14 - (dist(center(placed.get('sizeChart')), center(placed.get('variants'))) / 22), -8, 10);
+  if (id === 'cta' && placed.has('variants')) w += clamp(16 - (dist(center(placed.get('cta')), center(placed.get('variants'))) / 18), -10, 12);
   return Math.max(0, Math.round(w));
 }
 
@@ -478,20 +448,36 @@ function drawHeatmap(per) {
   heatmapLayer.classList.toggle('active', heatmapActive);
   if (!heatmapActive) return;
 
-  placed.forEach((el, id) => {
-    const p = center(el);
-    const weight = attentionWeight(id, per);
+  const ranked = [...placed.entries()].map(([id, el]) => ({ id, el, point: center(el), weight: attentionWeight(id, per) })).sort((a, b) => b.weight - a.weight);
+  ranked.forEach((entry, idx) => {
+    const { point, weight } = entry;
     const spot = document.createElement('div');
-    const size = clamp(weight * 2.8, 70, 240);
-    const color = weight > 55 ? 'rgba(255,60,60,.50)' : weight > 40 ? 'rgba(255,150,0,.42)' : 'rgba(255,235,0,.33)';
+    const size = clamp(weight * 2.9, 80, 250);
+    const color = weight > 55 ? 'rgba(255,96,78,.50)' : weight > 43 ? 'rgba(255,176,66,.42)' : 'rgba(255,223,98,.30)';
     spot.className = 'heat-spot';
-    spot.style.left = `${p.x}px`;
-    spot.style.top = `${p.y}px`;
+    spot.style.left = `${point.x}px`;
+    spot.style.top = `${point.y}px`;
     spot.style.width = `${size}px`;
     spot.style.height = `${size}px`;
-    spot.style.background = `radial-gradient(circle, ${color} 0%, rgba(255,190,0,.20) 38%, rgba(255,220,0,.08) 60%, rgba(255,255,255,0) 78%)`;
+    spot.style.background = `radial-gradient(circle, ${color} 0%, rgba(255,224,115,.20) 42%, rgba(255,250,240,0) 78%)`;
     heatmapLayer.appendChild(spot);
+
+    if (idx < 3) {
+      const tag = document.createElement('div');
+      tag.className = 'heat-tag';
+      tag.style.left = `${point.x}px`;
+      tag.style.top = `${point.y}px`;
+      tag.textContent = idx + 1;
+      heatmapLayer.appendChild(tag);
+    }
   });
+}
+
+function grade(n) {
+  if (n >= 85) return 'Strong';
+  if (n >= 70) return 'Good';
+  if (n >= 50) return 'Needs work';
+  return 'Critical';
 }
 
 function analyze() {
@@ -503,10 +489,7 @@ function analyze() {
     if (!placed.has(id)) critical.push(`${labelFor(id)} is missing.`);
     else if ((per[id] ?? 1) < 0.85) critical.push(`${labelFor(id)} is ${Math.round((1 - per[id]) * 100)}% hidden.`);
   });
-
-  if (placed.has('sizeChart') && !placed.has('variants')) {
-    critical.push('Size chart is present without option selectors, so its context is unclear.');
-  }
+  if (placed.has('sizeChart') && !placed.has('variants')) critical.push('Size chart is present without option selectors, so its context is unclear.');
 
   const visVals = Object.values(per);
   const visibilityScore = visVals.length ? Math.round((visVals.reduce((a, b) => a + b, 0) / visVals.length) * 100) : 0;
@@ -528,25 +511,13 @@ function analyze() {
   if (!visibleBeforeScroll('variants')) findings.push('Move the size / options selector closer to the top of the product decision area.');
   if (!visibleBeforeScroll('cta')) findings.push('Bring Add to Cart higher or provide a supporting sticky CTA so the next step is easier to find.');
 
-  if (placed.has('sizeChart') && placed.has('variants')) {
-    const d = dist(center(placed.get('sizeChart')), center(placed.get('variants')));
-    if (d > 220) findings.push('Place the size chart close to the variants because users expect help exactly where they choose a size.');
-  }
-
-  if (placed.has('trust') && placed.has('cta')) {
-    const d = dist(center(placed.get('trust')), center(placed.get('cta')));
-    if (d > 260) findings.push('Place trust badges closer to the action area so reassurance supports the decision moment.');
-  }
-
-  if (placed.has('shipping') && placed.has('cta')) {
-    const d = dist(center(placed.get('shipping')), center(placed.get('cta')));
-    if (d > 260) findings.push('Move shipping information closer to the CTA so uncertainty is reduced at the moment of choice.');
-  }
+  if (placed.has('sizeChart') && placed.has('variants') && dist(center(placed.get('sizeChart')), center(placed.get('variants'))) > 220) findings.push('Place the size chart close to the variants because users expect help exactly where they choose a size.');
+  if (placed.has('trust') && placed.has('cta') && dist(center(placed.get('trust')), center(placed.get('cta'))) > 260) findings.push('Place trust badges closer to the action area so reassurance supports the decision moment.');
+  if (placed.has('shipping') && placed.has('cta') && dist(center(placed.get('shipping')), center(placed.get('cta'))) > 260) findings.push('Move shipping information closer to the CTA so uncertainty is reduced at the moment of choice.');
 
   Object.entries(per).forEach(([id, v]) => {
     if (v < 0.95) findings.push(`${labelFor(id)} is partially covered. Remove overlap so it stays recognizable.`);
   });
-
   if (modeSelect.value === 'gutenberg') findings.push('Use Gutenberg only as a comparison lens. Do not let it override product-page task requirements.');
 
   let score = Math.round((visibilityScore * 0.38) + (seqScore * 0.30) + (groupScore * 0.20) + (modeFit * 0.12));
@@ -571,7 +542,6 @@ function analyze() {
     reactions,
     evidence
   });
-
   drawPath(per);
   drawHeatmap(per);
 }
@@ -580,9 +550,9 @@ function updateList(id, items) {
   const ul = document.getElementById(id);
   ul.innerHTML = '';
   if (!items.length) items = ['No items yet.'];
-  items.forEach(t => {
+  items.forEach(text => {
     const li = document.createElement('li');
-    li.textContent = t;
+    li.textContent = text;
     ul.appendChild(li);
   });
 }
@@ -609,6 +579,7 @@ function updateUI(r) {
   updateList('reactions', r.reactions);
   updateList('evidenceList', r.evidence);
   updateCharacter(r.score, r.critical, r.reactions);
+
   const primary = r.critical[0] || r.reactions[0] || r.findings[0] || 'No major friction detected';
   const nextMove = r.score >= 85 ? 'Keep the layout and validate it with real users' : (r.findings[0] || 'Reduce distance between related elements');
   document.getElementById('primaryFriction').textContent = primary;
@@ -623,7 +594,9 @@ modeSelect.addEventListener('change', () => {
   schedule();
 });
 
-presetSelect.addEventListener('change',()=>{ if(presetSelect.value!=='custom') applyPreset(presetSelect.value); });
+presetSelect.addEventListener('change', () => {
+  if (presetSelect.value !== 'custom') applyPreset(presetSelect.value);
+});
 
 heatmapBtn.addEventListener('click', () => {
   heatmapActive = !heatmapActive;
