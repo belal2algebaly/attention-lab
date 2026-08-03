@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Interactive product-page attention simulator with live UX feedback, simulated heatmap, and scientific recommendations." />
-  <title>Attention Lab V10</title>
+  <title>Attention Lab V12</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -132,6 +132,22 @@
               </div>
             </div>
 
+            <div class="sensitivity-card">
+              <div class="sensitivity-head">
+                <div><span class="section-label">Fine-grain model</span><strong id="activeElementLabel">Move any element</strong></div>
+                <div id="liveDelta" class="live-delta neutral">±0.00</div>
+              </div>
+              <div class="fine-metrics">
+                <div><span>Attention potential</span><strong id="attentionPotential">—</strong></div>
+                <div><span>Fold discoverability</span><strong id="foldDiscoverability">—</strong></div>
+                <div><span>Spatial expectation</span><strong id="spatialExpectation">—</strong></div>
+                <div><span>Relationship integrity</span><strong id="relationshipIntegrity">—</strong></div>
+                <div><span>Scan efficiency</span><strong id="scanEfficiency">—</strong></div>
+                <div><span>Crowding control</span><strong id="crowdingControl">—</strong></div>
+              </div>
+              <p class="sensitivity-note">Every pixel changes the continuous model. Scores are heuristic indices, not measured human probabilities.</p>
+            </div>
+
             <div id="criticalBanner" class="critical-banner" hidden></div>
 
             <div class="reaction-panel">
@@ -184,7 +200,7 @@
     <article><h3>Visual crowding and occlusion</h3><p>Overlaps reduce recognition. Hidden critical content cannot earn a strong score.</p></article>
     <article><h3>Spatial expectations</h3><p>Price, variants, sizing help, reassurance, and actions are evaluated against learned product-page expectations.</p></article>
     <article><h3>Initial viewport</h3><p>Elements visible before scrolling are easier to discover early in the decision process.</p></article>
-    <article><h3>Simulated heatmap</h3><p>The heatmap combines position, visibility, task importance, and grouping. It is illustrative, not biometric.</p></article>
+    <article><h3>Continuous sensitivity model</h3><p>Distances, overlap ratios, vertical depth, stage order, path length, and relationship gaps are evaluated with continuous functions. Moving an element changes the model without waiting for a threshold.</p></article><article><h3>Simulated heatmap</h3><p>The heatmap combines position, visibility, task importance, grouping, and fold discoverability. It is illustrative, not biometric.</p></article>
   </dialog>
   <script src="script.js"></script>
 </body>

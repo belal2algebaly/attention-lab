@@ -1,15 +1,14 @@
-# Attention Lab V10
+# Attention Lab V12
 
 Interactive static web app for simulating mobile product-page attention and layout clarity.
 
-## What's new in V10
+## What's new in V12
 
-- Fixed drag behavior for placed elements to feel smoother and more stable
-- Clearer eye-tracking visualization with a stronger attention path and ranked heatmap markers
-- Softer light theme inspired by the earlier calm color palette
-- More premium phone mockup styling
-- Smaller phone mockup on mobile so the shopper character appears below it more comfortably
-- Refined premium UI styling across the whole app
+- Continuous sensitivity model: distances, overlap, fold depth, sequence, and scan cost update continuously while dragging
+- Decimal scores and live score delta during movement
+- New metrics: Attention Potential, Fold Discoverability, Spatial Expectation, Relationship Integrity, Scan Efficiency, and Crowding Control
+- Semantic relationships across all product-page elements
+- Stronger scientific transparency: model indices are comparative heuristics, not real human probabilities
 
 ## Deploy
 
@@ -22,4 +21,4 @@ This is a static site.
 
 ## Important note
 
-The heatmap and attention path are **simulated educational outputs**, not real biometric eye tracking.
+The heatmap, scan path, and all numerical outputs are **simulated educational model scores**, not real biometric eye tracking or validated human-behavior probabilities.
