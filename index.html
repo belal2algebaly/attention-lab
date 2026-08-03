@@ -4,59 +4,71 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Interactive product-page attention simulator with live UX feedback, simulated heatmap, and scientific recommendations." />
-  <title>Attention Lab V7</title>
+  <title>Attention Lab V8</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <main class="app">
-    <header class="hero panel">
-      <div>
-        <span class="kicker">LIVE UX PSYCHOLOGY SIMULATOR</span>
-        <h1>Attention Lab</h1>
-        <p>Arrange mobile product-page elements and instantly see how a shopper may experience the page. The feedback is educational and rule-based — not real eye tracking.</p>
-      </div>
-      <div class="hero-actions">
-        <button id="resetBtn" class="btn secondary" type="button">Reset layout</button>
-        <button id="methodBtn" class="btn" type="button">Scientific basis</button>
+  <main class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Attention Lab home">
+        <span class="brand-mark">A</span>
+        <span><strong>Attention Lab</strong><small>Visual attention simulator</small></span>
+      </a>
+      <div class="top-actions">
+        <button id="resetBtn" class="ghost-btn" type="button">Reset</button>
+        <button id="methodBtn" class="solid-btn" type="button">Scientific basis</button>
       </div>
     </header>
 
-    <section class="toolbar panel">
-      <div>
-        <strong>Analysis lens</strong>
-        <span>Product Flow is the default. Use other lenses to compare decisions.</span>
+    <section class="control-dock" aria-label="Analysis controls">
+      <div class="control-copy">
+        <span class="eyebrow">Live analysis</span>
+        <strong>Arrange. Observe. Improve.</strong>
       </div>
-      <div class="toolbar-controls">
+      <label class="field">
+        <span>Preset</span>
         <select id="presetSelect" aria-label="Layout preset">
           <option value="custom">Custom layout</option>
-          <option value="balanced">Balanced PDP preset</option>
-          <option value="conversion">Conversion-focused preset</option>
-          <option value="contentHeavy">Content-heavy preset</option>
+          <option value="balanced">Balanced PDP</option>
+          <option value="conversion">Conversion-focused</option>
+          <option value="contentHeavy">Content-heavy</option>
         </select>
+      </label>
+      <label class="field">
+        <span>Lens</span>
         <select id="modeSelect" aria-label="Analysis lens">
-          <option value="task">Product Flow — recommended</option>
+          <option value="task">Product Flow</option>
           <option value="grouping">Grouping & Visibility</option>
-          <option value="gutenberg">Gutenberg — comparison only</option>
+          <option value="gutenberg">Gutenberg comparison</option>
         </select>
-        <button id="heatmapBtn" class="icon-toggle" type="button" aria-pressed="false" title="Toggle simulated attention heatmap">
-          <span class="eye-icon">◉</span>
-          <span>Heatmap</span>
-        </button>
-      </div>
+      </label>
+      <button id="heatmapBtn" class="heat-toggle" type="button" aria-pressed="false">
+        <span class="heat-icon">◉</span>
+        <span><strong>Heatmap</strong><small>Simulated attention</small></span>
+      </button>
     </section>
 
-    <section class="workspace">
-      <section class="panel phone-panel">
-        <div class="panel-title">
-          <span>1</span>
+    <section class="studio-grid">
+      <aside class="library-pane">
+        <div class="pane-heading">
+          <span class="step">01</span>
+          <div><strong>Elements</strong><small>Tap or drag to add</small></div>
+        </div>
+        <div id="palette" class="palette"></div>
+        <p class="library-note">Core elements start on the canvas. Optional elements remain available here.</p>
+      </aside>
+
+      <section class="canvas-pane">
+        <div class="canvas-heading">
           <div>
-            <h2>Mobile product page</h2>
-            <p><i class="live-dot"></i> Live reading simulation with scrollable viewport</p>
+            <span class="eyebrow">Mobile product page</span>
+            <h1>Build the shopper’s path</h1>
           </div>
+          <div class="live-chip"><span></span>Live</div>
         </div>
 
-        <div class="phone-and-summary">
-          <div class="phone-wrap">
+        <div class="experience-stage">
+          <div class="phone-column">
             <div class="phone">
               <div class="notch"></div>
               <div id="screen" class="screen">
@@ -70,140 +82,95 @@
                   <div class="screen-grid"></div>
                   <svg id="pathLayer" class="path-layer" aria-hidden="true"></svg>
                   <div id="heatmapLayer" class="heatmap-layer" aria-hidden="true"></div>
-                  <div id="emptyHint" class="empty-hint">Add product-page elements here</div>
+                  <div id="emptyHint" class="empty-hint">Add elements from the library</div>
                 </div>
               </div>
             </div>
-            <div class="phone-help">Drag on desktop. On mobile, tap an element to add it, then drag it inside the phone. Double-click any placed item to remove it.</div>
+            <p class="phone-help">Drag elements inside the phone. Double-click to remove. The phone itself scrolls.</p>
           </div>
 
-          <aside class="results-rail">
-            <div class="character-stage" id="characterStage" data-mood="waiting" aria-live="polite">
+          <aside class="insight-pane">
+            <div class="character-zone" id="characterStage" data-mood="waiting" aria-live="polite">
               <div class="character-figure" aria-hidden="true">
-                <div class="thought-pulse"></div>
                 <div class="character-hair"></div>
                 <div class="character-head">
-                  <span class="eye left"></span>
-                  <span class="eye right"></span>
-                  <span class="brow brow-left"></span>
-                  <span class="brow brow-right"></span>
+                  <span class="eye left"></span><span class="eye right"></span>
+                  <span class="brow brow-left"></span><span class="brow brow-right"></span>
                   <span class="mouth"></span>
                 </div>
-                <div class="character-neck"></div>
-                <div class="character-torso"></div>
+                <div class="character-neck"></div><div class="character-torso"></div>
               </div>
-              <div class="speech-bubble">
+              <div class="speech">
                 <span id="characterMood" class="mood-tag">Waiting</span>
-                <strong id="characterQuote">Show me a layout and I’ll react.</strong>
-                <p id="characterSubtext">I’m the simulated shopper. I react when key information is missing, hidden, or disconnected.</p>
+                <strong id="characterQuote">Show me a layout.</strong>
+                <p id="characterSubtext">I react when information is missing, hidden, or disconnected.</p>
               </div>
             </div>
 
-            <div class="score-block">
-              <div class="score-head"><span>Page clarity</span><strong id="score">—</strong></div>
+            <div class="score-card">
+              <div class="score-top"><div><span>Page clarity</span><small id="scoreState">Waiting for layout</small></div><strong id="score">—</strong></div>
               <div class="score-track"><span id="scoreFill"></span></div>
-              <div id="scoreState" class="score-state">Waiting for layout</div>
-            </div>
-
-            <div class="metrics">
-              <div><span>Visibility</span><strong id="visibility">—</strong></div>
-              <div><span>Sequence</span><strong id="sequence">—</strong></div>
-              <div><span>Grouping</span><strong id="grouping">—</strong></div>
+              <div class="metric-row">
+                <div><span>Visibility</span><strong id="visibility">—</strong></div>
+                <div><span>Sequence</span><strong id="sequence">—</strong></div>
+                <div><span>Grouping</span><strong id="grouping">—</strong></div>
+              </div>
             </div>
 
             <div id="criticalBanner" class="critical-banner" hidden></div>
 
-            <div class="reaction-box panel-lite">
-              <h3>Shopper reaction</h3>
+            <div class="reaction-panel">
+              <div class="section-label">Shopper reactions</div>
               <ul id="reactions"><li>No reaction yet.</li></ul>
             </div>
           </aside>
         </div>
       </section>
+    </section>
 
-      <aside class="panel palette-panel">
-        <div class="panel-title">
-          <span>2</span>
-          <div>
-            <h2>Element library</h2>
-            <p>Core items start on the page. Extra items stay optional by default.</p>
-          </div>
+    <section class="recommendation-suite">
+      <div class="suite-heading">
+        <div>
+          <span class="eyebrow">Recommendations</span>
+          <h2>What to change next</h2>
         </div>
-        <div id="palette" class="palette"></div>
-      </aside>
+        <p id="modeText">Can the shopper identify, evaluate, choose and act?</p>
+      </div>
 
-      <section class="panel recommendation-panel">
-        <div class="panel-title">
-          <span>3</span>
-          <div>
-            <h2>Recommendations & evidence</h2>
-            <p id="modeText">Can the shopper identify, evaluate, choose and act?</p>
-          </div>
-        </div>
-
-        <div class="reading-card panel-lite">
-          <span class="reading-label">What the shopper experiences</span>
+      <div class="summary-strip">
+        <div class="summary-main">
+          <span>Shopper experience</span>
           <p id="shopperText">Move an element to start the live simulation.</p>
         </div>
+        <div class="summary-item"><span>Primary friction</span><strong id="primaryFriction">Waiting for analysis</strong></div>
+        <div class="summary-item"><span>Best next move</span><strong id="bestNextMove">Arrange the page elements</strong></div>
+      </div>
 
-        <div class="findings panel-lite">
-          <h3>Top recommendations</h3>
+      <div class="recommendation-grid">
+        <article class="recommendation-card">
+          <div class="section-label">Priority actions</div>
           <ul id="findings"><li>No findings yet.</li></ul>
-        </div>
-
-        <div class="decision-summary panel-lite">
-          <h3>Decision summary</h3>
-          <div class="summary-grid">
-            <div><span>Primary friction</span><strong id="primaryFriction">—</strong></div>
-            <div><span>Best next move</span><strong id="bestNextMove">—</strong></div>
-          </div>
-        </div>
-
-        <div class="evidence-box panel-lite">
-          <h3>Why the tool says that</h3>
-          <ul id="evidenceList">
-            <li>Scientific explanations will appear here.</li>
-          </ul>
-        </div>
-      </section>
+        </article>
+        <article class="recommendation-card evidence-card">
+          <div class="section-label">Scientific rationale</div>
+          <ul id="evidenceList"><li>Scientific explanations will appear here.</li></ul>
+        </article>
+      </div>
     </section>
   </main>
 
   <dialog id="methodDialog">
     <button id="closeDialog" class="dialog-close" aria-label="Close">×</button>
-    <span class="kicker">METHODOLOGY</span>
-    <h2>Scientific basis behind the simulator</h2>
-    <p>This tool uses an educational rule system based on well-known perception and UX principles. It is not webcam eye tracking and does not measure a real user’s gaze.</p>
-    <article>
-      <h3>1) Task-based scan flow</h3>
-      <p>For product pages, people need a usable sequence: identify the item, understand the offer, evaluate price, choose options, then act. When this sequence is broken, friction increases.</p>
-    </article>
-    <article>
-      <h3>2) Gestalt grouping</h3>
-      <p>Related items are easier to understand when they are spatially close and visually grouped. Price should feel attached to the product details; size chart should feel attached to variants.</p>
-    </article>
-    <article>
-      <h3>3) Visual crowding & occlusion</h3>
-      <p>When items overlap or compete in a cramped space, recognition becomes harder. Critical content that is obscured cannot earn a strong score.</p>
-    </article>
-    <article>
-      <h3>4) Spatial expectations</h3>
-      <p>Shoppers carry learned expectations: price near the title, options before add to cart, and reassurance close to the decision zone.</p>
-    </article>
-    <article>
-      <h3>5) Initial viewport / above-the-fold</h3>
-      <p>Elements shown before scrolling are easier to discover early. This does not mean everything must be at the top, but core decision items should not be buried.</p>
-    </article>
-    <article>
-      <h3>6) Simulated heatmap</h3>
-      <p>The heatmap is a weighted visualization based on visibility, position, task importance, and grouping. It is a heuristic illustration, not a biometric reading.</p>
-    </article>
-    <article>
-      <h3>References used for the in-app recommendations</h3>
-      <p>Gestalt grouping, visual crowding research, above-the-fold attention, information scent / task support, and layout heuristics such as Gutenberg for comparison only.</p>
-    </article>
+    <span class="eyebrow">Methodology</span>
+    <h2>What this simulator measures</h2>
+    <p>This is a rule-based educational simulation, not real biometric eye tracking.</p>
+    <article><h3>Task-based scan flow</h3><p>Checks whether the page supports the practical sequence of identifying, evaluating, choosing, and acting.</p></article>
+    <article><h3>Gestalt grouping</h3><p>Related information is easier to understand when it is spatially close and grouped.</p></article>
+    <article><h3>Visual crowding and occlusion</h3><p>Overlaps reduce recognition. Hidden critical content cannot earn a strong score.</p></article>
+    <article><h3>Spatial expectations</h3><p>Price, variants, sizing help, reassurance, and actions are evaluated against learned product-page expectations.</p></article>
+    <article><h3>Initial viewport</h3><p>Elements visible before scrolling are easier to discover early in the decision process.</p></article>
+    <article><h3>Simulated heatmap</h3><p>The heatmap combines position, visibility, task importance, and grouping. It is illustrative, not biometric.</p></article>
   </dialog>
-
   <script src="script.js"></script>
 </body>
 </html>

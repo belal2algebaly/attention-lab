@@ -1,4 +1,4 @@
-# Attention Lab V7
+# Attention Lab V8
 
 A polished interactive product-page attention simulator.
 
@@ -25,3 +25,11 @@ The reading path and heatmap are educational simulations, not biometric eye trac
 - Desktop uses two comfortable columns; recommendations span full width below.
 - Mobile opens with a compact header and compact analysis controls.
 - Shopper character is reduced only on mobile to keep the phone visible sooner.
+
+## V8 UI Optimization
+- Full dark SaaS studio redesign
+- Phone canvas prioritized as the primary workspace
+- Compact sticky element library
+- Integrated character and result hierarchy
+- Full-width recommendations suite below the workspace
+- Mobile-first compact header and controls
