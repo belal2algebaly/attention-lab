@@ -1,122 +1,120 @@
 const definitions = [
   {id:'logo', label:'Logo', icon:'◈', hint:'Brand recognition'},
-  {id:'title', label:'Product title', icon:'T', hint:'What is this?'},
-  {id:'image', label:'Product image', icon:'▧', hint:'Primary product visual'},
-  {id:'price', label:'Price', icon:'$', hint:'Cost and value'},
+  {id:'image', label:'Product image', icon:'▧', hint:'Identify the product'},
+  {id:'title', label:'Product title', icon:'T', hint:'Product identity'},
   {id:'rating', label:'Reviews', icon:'★', hint:'Social proof'},
-  {id:'variants', label:'Size / variants', icon:'⌘', hint:'Required selection'},
+  {id:'price', label:'Price', icon:'$', hint:'Cost and value'},
+  {id:'variants', label:'Size / variants', icon:'⌘', hint:'Required choice'},
   {id:'shipping', label:'Shipping info', icon:'↗', hint:'Delivery reassurance'},
   {id:'cta', label:'Add to cart', icon:'＋', hint:'Primary action'},
-  {id:'model', label:'Gaze cue model', icon:'☺', hint:'Double-click to flip gaze'}
+  {id:'model', label:'Gaze cue model', icon:'☺', hint:'Double-click to flip'}
 ];
 
-const defaults = {
-  logo:[30,55], image:[38,145], title:[275,130], rating:[275,190], price:[275,235], variants:[275,295], cta:[275,370], shipping:[275,430], model:[470,145]
-};
-const preferred = {
-  logo:{x:[0,.35],y:[0,.18]}, image:{x:[0,.52],y:[.12,.7]}, title:{x:[.35,1],y:[.08,.35]}, rating:{x:[.34,1],y:[.1,.45]}, price:{x:[.34,1],y:[.18,.52]}, variants:{x:[.34,1],y:[.28,.65]}, cta:{x:[.34,1],y:[.38,.77]}, shipping:{x:[.34,1],y:[.45,.86]}, model:{x:[0,1],y:[.1,.7]}
-};
+const defaults={logo:[24,78],image:[22,130],title:[22,330],rating:[22,386],price:[22,432],variants:[22,486],cta:[22,555],shipping:[22,616],model:[214,333]};
 const taskOrder=['image','title','rating','price','variants','cta','shipping'];
-let placed = new Map();
-let draggedId = null;
+let placed=new Map(),draggedId=null,activeDrag=null,rafPending=false;
 
-const palette=document.getElementById('palette');
-const canvas=document.getElementById('canvas');
-const pathLayer=document.getElementById('pathLayer');
-const dropHint=document.getElementById('dropHint');
+const palette=document.getElementById('palette'),canvas=document.getElementById('canvas'),pathLayer=document.getElementById('pathLayer'),dropHint=document.getElementById('dropHint'),modeSelect=document.getElementById('modeSelect');
 
-function makePalette(){
-  palette.innerHTML='';
-  definitions.forEach(d=>{
-    const el=document.createElement('div'); el.className='palette-item'; el.draggable=true; el.dataset.id=d.id;
-    el.innerHTML=`<span class="icon">${d.icon}</span><span>${d.label}<small class="small">${d.hint}</small></span>`;
-    el.addEventListener('dragstart',()=>{draggedId=d.id});
-    palette.appendChild(el);
-  });
-}
+function makePalette(){palette.innerHTML='';definitions.forEach(d=>{const el=document.createElement('div');el.className='palette-item';el.draggable=true;el.dataset.id=d.id;el.innerHTML=`<span class="icon">${d.icon}</span><span>${d.label}<small>${d.hint}</small></span>`;el.addEventListener('dragstart',()=>draggedId=d.id);palette.appendChild(el)})}
+function clamp(v,min,max){return Math.max(min,Math.min(v,max))}
+function scheduleAnalysis(){if(rafPending)return;rafPending=true;requestAnimationFrame(()=>{rafPending=false;runLive()})}
 
 function addToCanvas(id,x,y){
-  const d=definitions.find(v=>v.id===id); if(!d) return;
-  let el=placed.get(id);
+  const d=definitions.find(v=>v.id===id);if(!d)return;let el=placed.get(id);
   if(!el){
-    el=document.createElement('div'); el.className='canvas-item'; el.dataset.type=id; el.dataset.id=id; el.draggable=true;
-    el.innerHTML=`${d.label}<span class="small">${d.hint}</span>`;
-    el.addEventListener('dragstart',e=>{draggedId=id; el.classList.add('dragging'); e.dataTransfer.setData('text/plain',id)});
-    el.addEventListener('dragend',()=>el.classList.remove('dragging'));
-    el.addEventListener('dblclick',()=>{
-      if(id==='model'){el.classList.toggle('looking-left');el.classList.toggle('looking-right');}
-      else removeFromCanvas(id);
-    });
-    if(id==='model') el.classList.add('looking-left');
-    canvas.appendChild(el); placed.set(id,el);
+    el=document.createElement('div');el.className='canvas-item';el.dataset.type=id;el.dataset.id=id;
+    el.innerHTML=`<strong>${d.label}</strong><span>${d.hint}</span>`;
+    if(id==='model')el.classList.add('looking-left');
+    el.addEventListener('pointerdown',startPointerDrag);
+    el.addEventListener('dblclick',e=>{e.preventDefault();if(id==='model'){el.classList.toggle('looking-left');el.classList.toggle('looking-right');scheduleAnalysis()}else removeFromCanvas(id)});
+    canvas.appendChild(el);placed.set(id,el);
   }
-  const maxX=canvas.clientWidth-el.offsetWidth-6, maxY=canvas.clientHeight-el.offsetHeight-6;
-  el.style.left=Math.max(4,Math.min(x,maxX))+'px'; el.style.top=Math.max(38,Math.min(y,maxY))+'px';
-  syncPalette(); clearSimulation();
+  const maxX=canvas.clientWidth-el.offsetWidth-5,maxY=canvas.clientHeight-el.offsetHeight-5;
+  el.style.left=clamp(x,4,maxX)+'px';el.style.top=clamp(y,55,maxY)+'px';syncPalette();scheduleAnalysis();
 }
-function removeFromCanvas(id){const el=placed.get(id);if(el)el.remove();placed.delete(id);syncPalette();clearSimulation()}
+function removeFromCanvas(id){const el=placed.get(id);if(el)el.remove();placed.delete(id);syncPalette();scheduleAnalysis()}
 function syncPalette(){document.querySelectorAll('.palette-item').forEach(el=>el.classList.toggle('used',placed.has(el.dataset.id)));dropHint.style.display=placed.size?'none':'grid'}
 canvas.addEventListener('dragover',e=>e.preventDefault());
-canvas.addEventListener('drop',e=>{e.preventDefault();const r=canvas.getBoundingClientRect();addToCanvas(draggedId,e.clientX-r.left-55,e.clientY-r.top-20)});
+canvas.addEventListener('drop',e=>{e.preventDefault();const r=canvas.getBoundingClientRect();addToCanvas(draggedId,e.clientX-r.left-55,e.clientY-r.top-22)});
 
-function reset(){[...placed.values()].forEach(el=>el.remove());placed.clear();Object.entries(defaults).forEach(([id,p])=>addToCanvas(id,p[0],p[1]));clearSimulation();}
-function center(el){const c=canvas.getBoundingClientRect(),r=el.getBoundingClientRect();return{x:r.left-c.left+r.width/2,y:r.top-c.top+r.height/2}}
-function norm(el){const p=center(el);return{x:p.x/canvas.clientWidth,y:(p.y-34)/(canvas.clientHeight-34)}}
+function startPointerDrag(e){if(e.button!==undefined&&e.button!==0)return;const el=e.currentTarget,r=el.getBoundingClientRect();activeDrag={el,dx:e.clientX-r.left,dy:e.clientY-r.top};el.setPointerCapture?.(e.pointerId);el.classList.add('dragging');document.addEventListener('pointermove',movePointer);document.addEventListener('pointerup',endPointer,{once:true})}
+function movePointer(e){if(!activeDrag)return;const cr=canvas.getBoundingClientRect(),el=activeDrag.el;const x=e.clientX-cr.left-activeDrag.dx,y=e.clientY-cr.top-activeDrag.dy;el.style.left=clamp(x,4,canvas.clientWidth-el.offsetWidth-5)+'px';el.style.top=clamp(y,55,canvas.clientHeight-el.offsetHeight-5)+'px';scheduleAnalysis()}
+function endPointer(){if(activeDrag)activeDrag.el.classList.remove('dragging');activeDrag=null;document.removeEventListener('pointermove',movePointer);scheduleAnalysis()}
+
+function reset(){[...placed.values()].forEach(el=>el.remove());placed.clear();Object.entries(defaults).forEach(([id,p])=>addToCanvas(id,p[0],p[1]));scheduleAnalysis()}
+function rect(el){const c=canvas.getBoundingClientRect(),r=el.getBoundingClientRect();return{x:r.left-c.left,y:r.top-c.top,w:r.width,h:r.height,right:r.right-c.left,bottom:r.bottom-c.top}}
+function center(el){const r=rect(el);return{x:r.x+r.w/2,y:r.y+r.h/2}}
 function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
-function grade(v){return v>=80?'Strong':v>=60?'Good':v>=40?'Mixed':'Weak'}
+function overlapArea(a,b){const w=Math.max(0,Math.min(a.right,b.right)-Math.max(a.x,b.x)),h=Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.y,b.y));return w*h}
+function grade(v){return v>=85?'Strong':v>=70?'Good':v>=50?'Mixed':'Weak'}
+
+function visibilityData(){
+  const entries=[...placed.entries()],per={},pairs=[];
+  entries.forEach(([id,el])=>per[id]=1);
+  for(let i=0;i<entries.length;i++)for(let j=i+1;j<entries.length;j++){
+    const [idA,elA]=entries[i],[idB,elB]=entries[j],a=rect(elA),b=rect(elB),area=overlapArea(a,b);if(!area)continue;
+    const ratioA=area/(a.w*a.h),ratioB=area/(b.w*b.h);per[idA]=Math.max(0,per[idA]-ratioA);per[idB]=Math.max(0,per[idB]-ratioB);pairs.push({a:idA,b:idB,area,ratioA,ratioB});
+  }
+  const values=Object.values(per);return{per,pairs,score:values.length?100*values.reduce((a,b)=>a+b,0)/values.length:0};
+}
 
 function calculate(){
-  const findings=[]; let placementScores=[];
-  placed.forEach((el,id)=>{if(!preferred[id])return;const p=norm(el),z=preferred[id];placementScores.push(p.x>=z.x[0]&&p.x<=z.x[1]&&p.y>=z.y[0]&&p.y<=z.y[1]?100:40)});
-  const placement=placementScores.length?placementScores.reduce((a,b)=>a+b,0)/placementScores.length:0;
-  const pairs=[['title','price'],['price','variants'],['variants','cta'],['rating','title'],['shipping','cta']];
-  const pairScores=pairs.filter(([a,b])=>placed.has(a)&&placed.has(b)).map(([a,b])=>Math.max(0,100-dist(center(placed.get(a)),center(placed.get(b)))/3));
-  const grouping=pairScores.length?pairScores.reduce((a,b)=>a+b,0)/pairScores.length:20;
-  let collisions=0, near=0; const arr=[...placed.values()];
-  for(let i=0;i<arr.length;i++)for(let j=i+1;j<arr.length;j++){
-    const a=arr[i].getBoundingClientRect(),b=arr[j].getBoundingClientRect();
-    const overlap=!(a.right<b.left||a.left>b.right||a.bottom<b.top||a.top>b.bottom); if(overlap)collisions++;
-    else if(dist(center(arr[i]),center(arr[j]))<90)near++;
+  const mode=modeSelect.value,findings=[],vis=visibilityData();
+  const critical=['price','cta','title','image'];let criticalFailure=false;
+  critical.forEach(id=>{if(!placed.has(id)){findings.push(`${definitions.find(d=>d.id===id).label} is missing.`);criticalFailure=true}else if((vis.per[id]??1)<.85){findings.push(`${definitions.find(d=>d.id===id).label} is partially or fully covered (${Math.round((1-vis.per[id])*100)}% hidden).`);criticalFailure=true}});
+  if(vis.pairs.length)findings.push(`${vis.pairs.length} overlap${vis.pairs.length>1?'s':''} detected. Covered content cannot receive a strong score.`);
+
+  const cW=canvas.clientWidth,cH=canvas.clientHeight;
+  let placement=70,grouping=70,flow=70;
+  const common={logo:[0,.48,.07,.22],image:[0,.95,.10,.48],title:[0,.95,.38,.62],rating:[0,.95,.42,.68],price:[0,.95,.48,.72],variants:[0,.95,.54,.82],cta:[0,.95,.62,.90],shipping:[0,.95,.68,.98],model:[0,1,.25,.76]};
+  const placementVals=[];placed.forEach((el,id)=>{if(!common[id])return;const p=center(el),z=common[id],nx=p.x/cW,ny=p.y/cH;placementVals.push(nx>=z[0]&&nx<=z[1]&&ny>=z[2]&&ny<=z[3]?100:35)});placement=placementVals.length?placementVals.reduce((a,b)=>a+b,0)/placementVals.length:0;
+
+  const pairs=[['title','rating'],['title','price'],['price','variants'],['variants','cta'],['cta','shipping']];
+  const groupVals=pairs.filter(([a,b])=>placed.has(a)&&placed.has(b)).map(([a,b])=>clamp(110-dist(center(placed.get(a)),center(placed.get(b)))/2.2,0,100));grouping=groupVals.length?groupVals.reduce((a,b)=>a+b,0)/groupVals.length:0;
+
+  if(mode==='task'){
+    const present=taskOrder.filter(id=>placed.has(id));let good=0;
+    for(let i=1;i<present.length;i++){const a=center(placed.get(present[i-1])),b=center(placed.get(present[i]));if(b.y>=a.y-10)good++}
+    flow=present.length>1?100*good/(present.length-1):0;
+    if(flow<70)findings.push('The product evaluation sequence is broken: identify → evaluate → select → act.');
+  }else if(mode==='gutenberg'){
+    const terminal=placed.has('cta')?center(placed.get('cta')):null;
+    const primary=placed.has('title')?center(placed.get('title')):null;
+    const primaryFit=primary&&primary.x<cW*.55&&primary.y<cH*.45?100:35;
+    const terminalFit=terminal&&terminal.x>cW*.45&&terminal.y>cH*.48?100:35;
+    flow=(primaryFit+terminalFit)/2;
+    if(flow<70)findings.push('In the Gutenberg lens, the opening information and terminal action do not anchor the expected diagonal journey.');
+  }else{
+    flow=Math.max(0,100-vis.pairs.length*22);
+    if(grouping<70)findings.push('Related product information is too dispersed to read as one coherent group.');
   }
-  const crowding=Math.max(0,100-collisions*30-near*5);
-  const present=taskOrder.filter(id=>placed.has(id)); let good=0;
-  for(let i=1;i<present.length;i++){const prev=norm(placed.get(present[i-1])),cur=norm(placed.get(present[i]));if(cur.y>=prev.y-0.10||Math.abs(cur.x-prev.x)<.25)good++}
-  const flow=present.length>1?(good/(present.length-1))*100:20;
+
   let gazeBonus=0;
-  if(placed.has('model')&&placed.has('cta')){
-    const m=placed.get('model'),mp=center(m),cp=center(placed.get('cta'));const pointsRight=m.classList.contains('looking-right');
-    if((pointsRight&&cp.x>mp.x)||(!pointsRight&&cp.x<mp.x)){gazeBonus=5;findings.push('The model’s gaze supports the primary action direction.');}
-    else findings.push('The model looks away from the primary action, creating a competing directional cue.');
-  }
-  let score=Math.round(placement*.32+grouping*.26+crowding*.22+flow*.20+gazeBonus);score=Math.min(100,score);
-  if(!placed.has('cta'))findings.unshift('The primary action is missing, so the shopping task cannot be completed.');
-  if(collisions)findings.unshift(`${collisions} overlapping relationship${collisions>1?'s':''} may make elements harder to distinguish.`);
-  if(grouping<60)findings.push('Related product information is too dispersed; bring title, price, options and CTA into a clearer group.');
-  if(placement<65)findings.push('Some familiar controls are outside their expected product-page regions, increasing search effort.');
-  if(flow<60)findings.push('The vertical order does not support a clear evaluate → select → act sequence.');
-  if(!findings.length)findings.push('The layout forms a coherent product evaluation and action sequence.');
-  return{score,placement,grouping,crowding,flow,findings};
+  if(placed.has('model')&&placed.has('cta')&&(vis.per.model??1)>.8&&(vis.per.cta??1)>.85){const m=placed.get('model'),mp=center(m),cp=center(placed.get('cta')),right=m.classList.contains('looking-right');if((right&&cp.x>mp.x)||(!right&&cp.x<mp.x))gazeBonus=3;else findings.push('The model gaze points away from the primary action.');}
+
+  let score=Math.round(vis.score*.38+placement*.20+grouping*.20+flow*.22+gazeBonus);
+  if(criticalFailure)score=Math.min(score,49);
+  if((vis.per.price??1)<.5||!placed.has('price'))score=Math.min(score,35);
+  if((vis.per.cta??1)<.5||!placed.has('cta'))score=Math.min(score,30);
+  if(!vis.pairs.length&&score>=78)findings.push('All critical elements remain visible and the layout forms a readable path.');
+  return{score,visibility:vis.score,placement,grouping,flow,findings:findings.slice(0,6),vis};
 }
 
-function drawPath(){
-  pathLayer.innerHTML=''; const ids=taskOrder.filter(id=>placed.has(id)); if(ids.length<2)return;
-  const pts=ids.map(id=>center(placed.get(id))).map(p=>({x:p.x,y:p.y-34}));
-  const ns='http://www.w3.org/2000/svg';
-  const line=document.createElementNS(ns,'polyline');line.setAttribute('points',pts.map(p=>`${p.x},${p.y}`).join(' '));line.setAttribute('fill','none');line.setAttribute('stroke','#22231d');line.setAttribute('stroke-width','2');line.setAttribute('stroke-dasharray','6 6');line.setAttribute('opacity','.7');pathLayer.appendChild(line);
-  pts.forEach((p,i)=>{const c=document.createElementNS(ns,'circle');c.setAttribute('cx',p.x);c.setAttribute('cy',p.y);c.setAttribute('r','12');c.setAttribute('fill','#dbff3f');c.setAttribute('stroke','#22231d');pathLayer.appendChild(c);const t=document.createElementNS(ns,'text');t.setAttribute('x',p.x);t.setAttribute('y',p.y+4);t.setAttribute('text-anchor','middle');t.setAttribute('font-size','10');t.setAttribute('font-weight','800');t.textContent=i+1;pathLayer.appendChild(t)});
+function drawPath(r){pathLayer.innerHTML='';let ids=taskOrder.filter(id=>placed.has(id)&&(r.vis.per[id]??1)>.5);if(modeSelect.value==='gutenberg')ids=['logo','title','image','cta'].filter(id=>placed.has(id)&&(r.vis.per[id]??1)>.5);if(ids.length<2)return;const ns='http://www.w3.org/2000/svg',pts=ids.map(id=>center(placed.get(id)));const line=document.createElementNS(ns,'polyline');line.setAttribute('points',pts.map(p=>`${p.x},${p.y}`).join(' '));line.setAttribute('fill','none');line.setAttribute('stroke','#20211d');line.setAttribute('stroke-width','2');line.setAttribute('stroke-dasharray','5 6');line.setAttribute('opacity','.64');pathLayer.appendChild(line);pts.forEach((p,i)=>{const c=document.createElementNS(ns,'circle');c.setAttribute('cx',p.x);c.setAttribute('cy',p.y);c.setAttribute('r','11');c.setAttribute('fill','#dbff3f');c.setAttribute('stroke','#20211d');pathLayer.appendChild(c);const t=document.createElementNS(ns,'text');t.setAttribute('x',p.x);t.setAttribute('y',p.y+4);t.setAttribute('text-anchor','middle');t.setAttribute('font-size','10');t.setAttribute('font-weight','800');t.textContent=i+1;pathLayer.appendChild(t)})}
+function moveEyesTo(el){if(!el)return;const p=center(el),x=(p.x/canvas.clientWidth-.5)*8,y=(p.y/canvas.clientHeight-.42)*6;document.querySelectorAll('.pupil').forEach(v=>v.style.transform=`translate(${x}px,${y}px)`)}
+function paintOcclusion(r){placed.forEach((el,id)=>{const hidden=1-(r.vis.per[id]??1);el.classList.toggle('occluded',hidden>.05);el.style.setProperty('--hidden',`${Math.round(hidden*100)}%`);el.title=hidden>.05?`${Math.round(hidden*100)}% covered`:''})}
+function runLive(){
+  const r=calculate();drawPath(r);paintOcclusion(r);
+  const readable=taskOrder.find(id=>placed.has(id)&&(r.vis.per[id]??1)>.6);moveEyesTo(readable?placed.get(readable):null);
+  document.getElementById('scoreValue').textContent=r.score+'/100';document.getElementById('scoreBar').style.width=r.score+'%';document.getElementById('scoreLabel').textContent=r.score>=85?'Clear and readable':r.score>=65?'Usable with friction':r.score>=50?'Weak structure':'Critical usability failure';
+  ['visibility','placement','grouping','flow'].forEach(k=>document.getElementById(k+'Metric').textContent=grade(r[k]));
+  const list=document.getElementById('findingsList');list.innerHTML='';r.findings.forEach(f=>{const li=document.createElement('li');li.textContent=f;list.appendChild(li)});
+  const mouth=document.getElementById('mouth');mouth.className='mouth '+(r.score>=78?'happy':r.score<50?'sad':'neutral');
+  document.getElementById('observerText').textContent=r.score>=85?'I can see the important information and follow the next step immediately.':r.score>=65?'I can complete the task, but a few relationships slow me down.':r.score>=50?'I need to search and reconstruct the page structure.':'Important information is missing, hidden or blocked.';
 }
-function moveEyesTo(el){if(!el)return;const p=norm(el);const x=(p.x-.5)*8,y=(p.y-.4)*5;document.querySelectorAll('.pupil').forEach(v=>v.style.transform=`translate(${x}px,${y}px)`)}
-function run(){
-  const r=calculate();drawPath();const first=taskOrder.find(id=>placed.has(id));moveEyesTo(first?placed.get(first):null);
-  document.getElementById('scoreValue').textContent=r.score+'/100';document.getElementById('scoreBar').style.width=r.score+'%';document.getElementById('scoreLabel').textContent=r.score>=80?'Clear and coherent':r.score>=60?'Usable, with friction':r.score>=40?'Competing structure':'High search effort';
-  ['placement','grouping','crowding','flow'].forEach(k=>document.getElementById(k+'Metric').textContent=grade(r[k]));
-  const list=document.getElementById('findingsList');list.innerHTML='';r.findings.slice(0,5).forEach(f=>{const li=document.createElement('li');li.textContent=f;list.appendChild(li)});
-  const mouth=document.getElementById('mouth');mouth.className='mouth '+(r.score>=75?'happy':r.score<50?'sad':'neutral');
-  document.getElementById('observerText').textContent=r.score>=80?'I can identify the product, evaluate it and find the next action quickly.':r.score>=60?'I understand the page, but a few relationships make me pause.':r.score>=40?'I need to search around before I know what to do.':'The page feels fragmented. I am not sure where to begin.';
-  const ids=taskOrder.filter(id=>placed.has(id));ids.forEach((id,i)=>setTimeout(()=>moveEyesTo(placed.get(id)),i*500));
-}
-function clearSimulation(){pathLayer.innerHTML='';document.getElementById('scoreValue').textContent='—';document.getElementById('scoreBar').style.width='0';document.getElementById('scoreLabel').textContent='Layout changed — run again';document.querySelectorAll('.pupil').forEach(v=>v.style.transform='translate(0,0)')}
 
-document.getElementById('runBtn').addEventListener('click',run);document.getElementById('resetBtn').addEventListener('click',reset);
+modeSelect.addEventListener('change',()=>{document.getElementById('modeNote').textContent=modeSelect.value==='task'?'Task completion model':modeSelect.value==='gutenberg'?'Historical layout heuristic':'Perceptual grouping model';scheduleAnalysis()});
+document.getElementById('resetBtn').addEventListener('click',reset);
 const dialog=document.getElementById('evidenceDialog');document.getElementById('evidenceBtn').addEventListener('click',()=>dialog.showModal());document.getElementById('closeDialog').addEventListener('click',()=>dialog.close());dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close()});
-makePalette();setTimeout(reset,50);
+window.addEventListener('resize',scheduleAnalysis);makePalette();setTimeout(reset,60);
