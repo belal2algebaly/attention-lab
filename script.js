@@ -16,21 +16,20 @@ const defs = [
 const initialDefaults = {
   image: [16, 22],
   title: [16, 258],
-  rating: [16, 314],
-  price: [16, 360],
-  variants: [16, 420],
-  cta: [16, 500]
+  rating: [16, 330],
+  price: [16, 398],
+  variants: [16, 466],
+  cta: [16, 538]
 };
 
 const stages = [
   ['image', 'title', 'rating'],
   ['price', 'discount'],
   ['variants', 'sizeChart'],
-  ['trust', 'shipping', 'returns'],
   ['cta', 'stickyCta']
 ];
 
-const taskPath = ['image', 'title', 'rating', 'price', 'discount', 'variants', 'sizeChart', 'trust', 'shipping', 'returns', 'cta', 'stickyCta'];
+const taskPath = ['image', 'title', 'rating', 'price', 'discount', 'variants', 'sizeChart', 'cta', 'trust', 'shipping', 'returns', 'stickyCta'];
 const criticalIds = ['image', 'title', 'price', 'variants', 'cta'];
 
 const relationshipRules = [
@@ -67,9 +66,9 @@ let lastComposite = 0;
 let selectedElementId = null;
 
 const presets = {
-  balanced: { image:[16,22], title:[16,258], rating:[16,314], price:[16,360], variants:[16,420], sizeChart:[210,424], cta:[16,500], shipping:[16,565], returns:[16,625] },
-  conversion: { image:[16,22], title:[16,250], price:[16,305], rating:[210,309], discount:[245,250], variants:[16,365], sizeChart:[220,371], trust:[16,430], cta:[16,490], shipping:[16,555], stickyCta:[16,690] },
-  contentHeavy: { image:[16,22], title:[16,258], rating:[16,314], price:[16,360], discount:[235,360], variants:[16,430], sizeChart:[220,436], shipping:[16,500], returns:[16,560], trust:[16,620], cta:[16,690] }
+  balanced: { image:[16,22], title:[16,258], rating:[16,330], price:[16,398], variants:[16,466], sizeChart:[16,538], cta:[16,606], shipping:[16,678], returns:[16,746] },
+  conversion: { image:[16,22], title:[16,250], rating:[16,318], price:[16,386], discount:[16,454], variants:[16,522], sizeChart:[16,594], cta:[16,662], trust:[16,734], shipping:[16,802], stickyCta:[16,910] },
+  contentHeavy: { image:[16,22], title:[16,258], rating:[16,330], price:[16,398], discount:[16,466], variants:[16,534], sizeChart:[16,606], cta:[16,674], shipping:[16,746], returns:[16,814], trust:[16,882] }
 };
 
 function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
@@ -77,7 +76,7 @@ function uniq(arr) { return [...new Set(arr)]; }
 function labelFor(id) { return defs.find(d => d.id === id)?.label || id; }
 function importanceFor(id) { return defs.find(d => d.id === id)?.importance || 0.5; }
 function round2(n) { return Math.round(n * 100) / 100; }
-function fmt(n) { return Number.isFinite(n) ? n.toFixed(1) : '—'; }
+function fmt(n) { return Number.isFinite(n) ? n.toFixed(2) : '—'; }
 
 function sigmoid(x) { return 1 / (1 + Math.exp(-x)); }
 function gaussianPenalty(distance, ideal, tolerance) {
@@ -125,9 +124,12 @@ function edgeGap(a, b) {
 function centerDistance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
 
 function viewportBoundary() {
-  if (window.innerWidth <= 390) return 414;
-  if (window.innerWidth <= 700) return 446;
-  return 548;
+  const marker = document.querySelector('.viewport-marker');
+  if (marker && contentLayer) {
+    const boundary = marker.offsetTop - contentLayer.offsetTop;
+    if (boundary > 120) return boundary;
+  }
+  return Math.max(260, screen.clientHeight - 110);
 }
 
 function applyPreset(name) {
@@ -316,11 +318,15 @@ function weightedVisibility(per) {
 
 function foldScoreFor(id) {
   if (!placed.has(id)) return 0;
-  const y = center(placed.get(id)).y;
+  const b = box(placed.get(id));
   const boundary = viewportBoundary();
-  const centerPoint = boundary * 0.52;
-  const scale = boundary * 0.42;
-  return clamp(100 * Math.exp(-Math.max(0, y - centerPoint) / scale), 0, 100);
+  const depth = Math.max(0, b.y - boundary);
+  const belowFoldDecay = Math.exp(-depth / Math.max(1, boundary * 0.78));
+  // A very small within-viewport depth term keeps the model continuous without
+  // pretending that a one-pixel move creates a proven behavioral change.
+  const withinViewportDepth = Math.min(b.y, boundary) / Math.max(1, boundary);
+  const withinViewportFactor = 1 - 0.035 * withinViewportDepth;
+  return clamp(100 * belowFoldDecay * withinViewportFactor, 0, 100);
 }
 
 function weightedFoldDiscoverability() {
@@ -336,11 +342,17 @@ function weightedFoldDiscoverability() {
 
 function relationScores() {
   const details = [];
+  const scale = clamp(contentLayer.clientWidth / 380, 0.72, 1.22);
   relationshipRules.forEach(rule => {
     if (!placed.has(rule.a) || !placed.has(rule.b)) return;
     const gap = edgeGap(box(placed.get(rule.a)), box(placed.get(rule.b)));
-    const score = gaussianPenalty(gap, rule.ideal, rule.tolerance);
-    details.push({ ...rule, gap, score });
+    const comfortableGap = rule.ideal * scale;
+    const decayRange = rule.tolerance * scale;
+    // Proximity is monotonic: being closer than the comfortable range is not penalized here.
+    // Overlap and excessive tightness are handled independently by crowding/occlusion.
+    const excess = Math.max(0, gap - comfortableGap);
+    const score = clamp(100 * Math.exp(-Math.pow(excess / Math.max(1, decayRange), 1.35)), 0, 100);
+    details.push({ ...rule, ideal: comfortableGap, tolerance: decayRange, gap, score });
   });
   return details;
 }
@@ -469,6 +481,85 @@ function attentionPotentialScore(per, grouping, fold, spatial) {
   return clamp(base * 0.70 + grouping * 0.12 + spatial * 0.10 + fold * 0.08, 0, 100);
 }
 
+
+function criticalCoverageScore(per) {
+  let total = 0;
+  let weights = 0;
+  const weightsMap = { image:0.72, title:0.88, price:1.0, variants:1.0, cta:1.18 };
+  criticalIds.forEach(id => {
+    const w = weightsMap[id] || 1;
+    const present = placed.has(id) ? 1 : 0;
+    const visible = placed.has(id) ? (per[id] ?? 0) : 0;
+    total += 100 * present * visible * w;
+    weights += w;
+  });
+  return weights ? total / weights : 0;
+}
+
+function actionReadinessScore(per) {
+  if (!placed.has('cta')) return 0;
+  const ctaVis = per.cta ?? 0;
+  const ctaFold = foldScoreFor('cta') / 100;
+  const variantPresent = placed.has('variants') ? 1 : 0;
+  const variantVis = placed.has('variants') ? (per.variants ?? 0) : 0;
+  let pairScore = 0;
+  if (placed.has('variants')) {
+    const relation = relationScores().find(r => r.a === 'variants' && r.b === 'cta');
+    pairScore = relation ? relation.score / 100 : 0;
+  }
+  const primary = 100 * Math.pow(Math.max(0.0001, ctaVis * ctaFold), 0.68);
+  const selection = 100 * variantPresent * variantVis;
+  let score = 0.48 * primary + 0.24 * selection + 0.28 * (100 * pairScore);
+
+  // A sticky CTA is support, not a replacement for a deeply buried primary action.
+  if (placed.has('stickyCta')) {
+    const stickySupport = (per.stickyCta ?? 0) * (foldScoreFor('stickyCta') / 100) * 12;
+    score += stickySupport;
+  }
+  return clamp(score, 0, 100);
+}
+
+function decisionContinuityScore(per, relations) {
+  const required = ['title','price','variants','cta'];
+  if (required.some(id => !placed.has(id))) return 0;
+  const pairKeys = [['title','price'],['price','variants'],['variants','cta']];
+  const pairScores = pairKeys.map(([a,b]) => {
+    const r = relations.find(x => x.a === a && x.b === b);
+    return r ? r.score : 0;
+  });
+  const vertical = pairKeys.map(([a,b]) => sigmoid((center(placed.get(b)).y - center(placed.get(a)).y) / 28) * 100);
+  const visibility = required.map(id => (per[id] ?? 0) * 100);
+  const all = pairScores.concat(vertical, visibility);
+  // Geometric mean prevents one broken stage from being hidden by strong averages elsewhere.
+  const gm = Math.exp(all.reduce((sum,v) => sum + Math.log(Math.max(1,v)), 0) / all.length);
+  return clamp(gm, 0, 100);
+}
+
+function taskFailureCaps(score, metrics, per) {
+  let capped = score;
+  if (!placed.has('cta')) capped = Math.min(capped, 24);
+  if (!placed.has('variants')) capped = Math.min(capped, 30);
+  if (!placed.has('price')) capped = Math.min(capped, 34);
+  if (!placed.has('title')) capped = Math.min(capped, 38);
+  if (!placed.has('image')) capped = Math.min(capped, 48);
+
+  if (placed.has('cta')) {
+    const fold = foldScoreFor('cta');
+    const ctaVisible = (per.cta ?? 0) * 100;
+    let foldCap = 100;
+    if (fold < 18) foldCap = placed.has('stickyCta') ? 52 + 0.33 * fold : 38 + 0.22 * fold;
+    else if (fold < 32) foldCap = placed.has('stickyCta') ? 58 + 0.64 * (fold - 18) : 42 + 0.86 * (fold - 18);
+    else if (fold < 50) foldCap = 54 + (fold - 32);
+    capped = Math.min(capped, foldCap);
+    if (ctaVisible < 85) capped = Math.min(capped, 28 + 0.19 * ctaVisible);
+  }
+
+  if (metrics.action < 45) capped = Math.min(capped, 40 + 0.20 * metrics.action);
+  if (metrics.continuity < 50) capped = Math.min(capped, 44 + 0.20 * metrics.continuity);
+  if (metrics.critical < 82) capped = Math.min(capped, 45 + 0.207 * metrics.critical);
+  return clamp(capped, 0, 100);
+}
+
 function modeScore(metrics) {
   if (modeSelect.value === 'grouping') {
     return 0.30 * metrics.visibility + 0.28 * metrics.grouping + 0.22 * metrics.relationship + 0.20 * metrics.crowding;
@@ -483,7 +574,7 @@ function modeScore(metrics) {
     const gutenberg = clamp((titleScore + ctaScore) / 2, 0, 100);
     return 0.26 * metrics.visibility + 0.18 * metrics.grouping + 0.16 * metrics.sequence + 0.15 * metrics.fold + 0.25 * gutenberg;
   }
-  return 0.20 * metrics.visibility + 0.18 * metrics.sequence + 0.14 * metrics.grouping + 0.12 * metrics.fold + 0.12 * metrics.spatial + 0.10 * metrics.relationship + 0.08 * metrics.scan + 0.06 * metrics.crowding;
+  return 0.13 * metrics.visibility + 0.11 * metrics.sequence + 0.10 * metrics.grouping + 0.08 * metrics.fold + 0.09 * metrics.spatial + 0.09 * metrics.relationship + 0.07 * metrics.scan + 0.06 * metrics.crowding + 0.12 * metrics.action + 0.09 * metrics.continuity + 0.06 * metrics.critical;
 }
 
 function applyHardConstraints(score, per) {
@@ -507,6 +598,7 @@ function buildReactions(per, relations, metrics) {
   if (!placed.has('price')) reactions.push('I cannot evaluate the offer because the price is missing.');
   if (!placed.has('variants')) reactions.push('I cannot make the required product choice.');
   if (!placed.has('cta')) reactions.push('I cannot see the next action.');
+  else if (foldScoreFor('cta') < 32) reactions.push('I understand the product, but the purchase action is too far down the page.');
 
   Object.entries(per).forEach(([id, v]) => {
     if (v < 0.92) reactions.push(`${labelFor(id)} is ${Math.round((1 - v) * 100)}% covered.`);
@@ -516,6 +608,8 @@ function buildReactions(per, relations, metrics) {
   if (metrics.scan < 65) reactions.push('The reading path requires extra horizontal movement or backward scanning.');
   if (metrics.crowding < 70) reactions.push('Nearby elements are increasing crowding pressure and visual competition.');
   if (metrics.sequence < 70) reactions.push('The decision stages are not progressing in a stable top-to-bottom order.');
+  if (metrics.action < 60) reactions.push('The page explains the product better than it enables the purchase.');
+  if (metrics.continuity < 60) reactions.push('I lose the connection between the offer, the choice, and the action.');
 
   return uniq(reactions).slice(0, 6);
 }
@@ -534,6 +628,8 @@ function scientificReasons(metrics, relations, per) {
   if (metrics.scan < 78 || metrics.sequence < 78) {
     reasons.push('Scan efficiency combines stage order, path length, horizontal detours, and backward movement.');
   }
+  if (metrics.action < 78) reasons.push('Action readiness uses a bottleneck rule: CTA visibility, depth, option-to-action proximity, and selection availability must all remain usable.');
+  if (metrics.continuity < 78) reasons.push('Decision continuity uses a geometric mean so one broken stage cannot be hidden by high averages elsewhere.');
   if (modeSelect.value === 'gutenberg') {
     reasons.push('Gutenberg contributes only as a comparison heuristic and cannot override missing or obscured task-critical elements.');
   }
@@ -604,7 +700,8 @@ function elementAttention(id, per, metrics) {
   const visibility = per[id] ?? 0;
   const fold = foldScoreFor(id) / 100;
   const importance = importanceFor(id);
-  return clamp(100 * visibility * (0.48 + 0.30 * fold + 0.22 * importance) * (0.88 + metrics.grouping / 833), 0, 100);
+  const actionModifier = id === 'cta' ? (0.55 + 0.45 * metrics.action / 100) : 1;
+  return clamp(100 * visibility * (0.48 + 0.30 * fold + 0.22 * importance) * (0.88 + metrics.grouping / 833) * actionModifier, 0, 100);
 }
 
 function drawHeatmap(per, metrics) {
@@ -658,16 +755,30 @@ function analyze() {
   const scan = scanEfficiencyScore();
   const crowding = crowdingControlScore(per);
   const attention = attentionPotentialScore(per, grouping, fold, spatial);
+  const action = actionReadinessScore(per);
+  const continuity = decisionContinuityScore(per, relations);
+  const criticalCoverage = criticalCoverageScore(per);
 
-  const metrics = { visibility, grouping, fold, spatial, relationship, sequence, scan, crowding, attention };
+  const metrics = { visibility, grouping, fold, spatial, relationship, sequence, scan, crowding, attention, action, continuity, critical: criticalCoverage };
   let composite = applyHardConstraints(modeScore(metrics), per);
+  composite = taskFailureCaps(composite, metrics, per);
   composite = clamp(composite, 0, 100);
   lastComposite = composite;
 
   applyOcclusionStyles(per);
 
   const critical = [];
-  criticalIds.forEach(id => {
+  // Action blockers are prioritized because they stop task completion.
+  if (!placed.has('cta')) critical.push('Add to cart is missing, so the purchase task cannot be completed.');
+  else if ((per.cta ?? 1) < 0.85) critical.push(`Add to cart is ${Math.round((1 - per.cta) * 100)}% hidden.`);
+  else if (foldScoreFor('cta') < 32) critical.push(`Add to cart is too deep in the page to support action readiness (${foldScoreFor('cta').toFixed(1)} discoverability).`);
+
+  if (placed.has('variants') && placed.has('cta')) {
+    const vr = relations.find(r => r.a === 'variants' && r.b === 'cta');
+    if (vr && vr.score < 42) critical.push(`Variants and Add to cart are disconnected (${Math.round(vr.gap)}px edge gap).`);
+  }
+
+  criticalIds.filter(id => id !== 'cta').forEach(id => {
     if (!placed.has(id)) critical.push(`${labelFor(id)} is missing.`);
     else if ((per[id] ?? 1) < 0.85) critical.push(`${labelFor(id)} is ${Math.round((1 - per[id]) * 100)}% hidden.`);
   });
@@ -682,6 +793,9 @@ function analyze() {
   if (scan < 74) findings.push('Reduce horizontal detours and backward scanning between decision stages.');
   if (crowding < 74) findings.push('Increase separation or remove overlap where nearby elements create crowding pressure.');
   if (relationship < 74) findings.push('Strengthen the visibility and distance of semantically related element pairs.');
+  if (action < 74) findings.push('Improve action readiness: keep the primary CTA visible, reachable after option selection, and close to the variants.');
+  if (continuity < 74) findings.push('Repair the title → price → variants → CTA decision chain; one weak stage is lowering the whole path.');
+  if (criticalCoverage < 90) findings.push('Restore full visibility for all task-critical elements; averages cannot compensate for a weak critical stage.');
   if (modeSelect.value === 'gutenberg') findings.push('Treat Gutenberg as a comparison heuristic only; product-task constraints remain primary.');
   if (!critical.length && findings.length === 0) findings.push('The current layout has strong continuous scores across visibility, flow, grouping, and relationship integrity.');
 
@@ -713,7 +827,12 @@ function updateCharacter(score, critical, reactions) {
   let quoteText = 'I need to look around before I can decide.';
   let subText = reactions[0] || 'Small spatial changes are affecting the model continuously.';
 
-  if (score >= 86) {
+  if (critical.some(x => /Add to cart|Variants and Add/i.test(x))) {
+    state = 'critical';
+    moodText = 'Blocked';
+    quoteText = reactions.find(x => /purchase action|next action|explains the product/i.test(x)) || 'I cannot complete the purchase from here.';
+    subText = 'The action stage is missing, too deep, hidden, or disconnected from option selection.';
+  } else if (score >= 86) {
     state = 'satisfied';
     moodText = 'Satisfied';
     quoteText = 'Everything feels clear. I know what to do next.';
@@ -767,6 +886,9 @@ function updateUI(r) {
   document.getElementById('relationshipIntegrity').textContent = fmt(r.metrics.relationship);
   document.getElementById('scanEfficiency').textContent = fmt(r.metrics.scan);
   document.getElementById('crowdingControl').textContent = fmt(r.metrics.crowding);
+  document.getElementById('actionReadiness').textContent = fmt(r.metrics.action);
+  document.getElementById('decisionContinuity').textContent = fmt(r.metrics.continuity);
+  document.getElementById('criticalCoverage').textContent = fmt(r.metrics.critical);
   updateActiveLabel();
   updateDelta(score);
 
@@ -775,7 +897,7 @@ function updateUI(r) {
   criticalBanner.textContent = r.critical[0] || '';
 
   document.getElementById('shopperText').textContent =
-    score >= 85 ? 'The shopper can identify, evaluate, choose, and act with low simulated scan cost.' :
+    score >= 85 && r.metrics.action >= 80 ? 'The shopper can identify, evaluate, choose, and act with low simulated scan cost.' :
     score >= 70 ? 'The layout is workable, but small spatial changes still alter grouping, discoverability, and scan efficiency.' :
     score >= 50 ? 'The shopper needs extra scanning to reconstruct relationships between important elements.' :
     'Critical information is missing, obscured, crowded, or placed in a high-cost decision path.';

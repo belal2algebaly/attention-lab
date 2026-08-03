@@ -1,24 +1,31 @@
-# Attention Lab V12
+# Attention Lab V14 — Audited Logic Build
 
-Interactive static web app for simulating mobile product-page attention and layout clarity.
+Interactive product-page attention and decision-flow simulator.
 
-## What's new in V12
+## Audit changes
 
-- Continuous sensitivity model: distances, overlap, fold depth, sequence, and scan cost update continuously while dragging
-- Decimal scores and live score delta during movement
-- New metrics: Attention Potential, Fold Discoverability, Spatial Expectation, Relationship Integrity, Scan Efficiency, and Crowding Control
-- Semantic relationships across all product-page elements
-- Stronger scientific transparency: model indices are comparative heuristics, not real human probabilities
+- Recalibrated the fold using the actual visible content boundary inside the phone, not the outer screen height.
+- Added continuous action bottlenecks so a deeply buried, hidden, missing, or disconnected CTA cannot be masked by high averages.
+- Replaced exact-distance Gaussian relationship scoring with monotonic proximity decay; close related elements are not punished, while overlap is handled by crowding and occlusion.
+- Normalized relationship distances to the responsive phone width.
+- Removed reassurance elements from the mandatory purchase-stage sequence.
+- Prioritized CTA blockers in the critical banner and shopper reaction.
+- Made hard score ceilings continuous to avoid flat score plateaus during movement.
+- Increased metric display precision to two decimals.
+- Rebuilt presets so optional elements do not overlap on mobile.
+- Added explicit evidence boundaries: indices are heuristic comparison scores, not biometric probabilities or conversion predictions.
 
-## Deploy
+## Validation performed
 
-This is a static site.
+Tested at desktop and mobile widths for:
 
-- Upload the files to GitHub
-- Import the repo into Vercel
-- Framework preset: **Other**
-- No build command needed
+- Default layout
+- All presets
+- CTA placed at the bottom
+- Missing CTA
+- CTA overlapping variants
+- Alternative title/reviews/image ordering
+- One-pixel movement sensitivity
+- JavaScript runtime and syntax errors
 
-## Important note
-
-The heatmap, scan path, and all numerical outputs are **simulated educational model scores**, not real biometric eye tracking or validated human-behavior probabilities.
+The heatmap and scan path remain simulated educational outputs, not real eye tracking.

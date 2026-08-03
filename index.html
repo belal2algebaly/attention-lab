@@ -144,6 +144,9 @@
                 <div><span>Relationship integrity</span><strong id="relationshipIntegrity">—</strong></div>
                 <div><span>Scan efficiency</span><strong id="scanEfficiency">—</strong></div>
                 <div><span>Crowding control</span><strong id="crowdingControl">—</strong></div>
+                <div><span>Action readiness</span><strong id="actionReadiness">—</strong></div>
+                <div><span>Decision continuity</span><strong id="decisionContinuity">—</strong></div>
+                <div><span>Critical coverage</span><strong id="criticalCoverage">—</strong></div>
               </div>
               <p class="sensitivity-note">Every pixel changes the continuous model. Scores are heuristic indices, not measured human probabilities.</p>
             </div>
@@ -195,12 +198,14 @@
     <span class="eyebrow">Methodology</span>
     <h2>What this simulator measures</h2>
     <p>This is a rule-based educational simulation, not real biometric eye tracking.</p>
-    <article><h3>Task-based scan flow</h3><p>Checks whether the page supports the practical sequence of identifying, evaluating, choosing, and acting.</p></article>
+    <article><h3>Task-based scan flow</h3><p>Checks whether the page supports product identification, offer evaluation, option selection, reassurance, and a reachable purchase action. Missing or deeply buried critical stages cap the score.</p></article>
     <article><h3>Gestalt grouping</h3><p>Related information is easier to understand when it is spatially close and grouped.</p></article>
     <article><h3>Visual crowding and occlusion</h3><p>Overlaps reduce recognition. Hidden critical content cannot earn a strong score.</p></article>
     <article><h3>Spatial expectations</h3><p>Price, variants, sizing help, reassurance, and actions are evaluated against learned product-page expectations.</p></article>
-    <article><h3>Initial viewport</h3><p>Elements visible before scrolling are easier to discover early in the decision process.</p></article>
-    <article><h3>Continuous sensitivity model</h3><p>Distances, overlap ratios, vertical depth, stage order, path length, and relationship gaps are evaluated with continuous functions. Moving an element changes the model without waiting for a threshold.</p></article><article><h3>Simulated heatmap</h3><p>The heatmap combines position, visibility, task importance, grouping, and fold discoverability. It is illustrative, not biometric.</p></article>
+    <article><h3>Initial viewport and action availability</h3><p>Discoverability decays with depth. A primary CTA placed far below the decision zone receives a strong task penalty; a sticky CTA can only partially compensate.</p></article>
+    <article><h3>Simulated heatmap</h3><p>The heatmap combines task importance, visibility, viewport depth, semantic relationships, crowding, and action readiness. It is illustrative, not biometric.</p></article>
+    <article><h3>Evidence boundaries</h3><p>The model uses continuous heuristic indices, not conversion probabilities. Exact pixel weights are calibration choices for comparison and are not claimed as universal biological constants.</p></article>
+    <article><h3>Reference foundation</h3><p>Core concepts are informed by research on visual crowding and critical spacing, perceptual grouping in HCI, task-dependent visual search, and eye-tracking findings on scrolling and attention.</p></article>
   </dialog>
   <script src="script.js"></script>
 </body>
