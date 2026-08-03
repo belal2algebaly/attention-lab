@@ -248,7 +248,7 @@ function visibilityMap() {
 
 function visibleBeforeScroll(id) {
   if (!placed.has(id)) return false;
-  return box(placed.get(id)).y < 530;
+  return box(placed.get(id)).y < (window.innerWidth <= 390 ? 414 : window.innerWidth <= 700 ? 446 : 548);
 }
 
 function applyOcclusionStyles(per) {
