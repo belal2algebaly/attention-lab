@@ -1,14 +1,21 @@
-# Attention Lab V3
+# Attention Lab V6
 
-A static, live mobile product-page placement simulator.
+A polished interactive product-page attention simulator.
 
-## What changed in V3
-- Removed the separate gaze-cue model.
-- Product Flow is the clear default methodology.
-- Live analysis updates during dragging.
-- Critical visibility rules prevent a good score when Price or Add to Cart is missing or covered.
-- Simplified results: Visibility, Sequence, Grouping.
-- Optional comparison modes: Grouping & Visibility and Gutenberg heuristic.
+## V6 improvements
+- Larger, animated shopper character
+- Stronger emotional reactions and smarter contextual feedback
+- Three ready-made layout presets
+- Simulated attention heatmap
+- Scrollable mobile page mockup
+- Expanded optional element library
+- Decision summary with primary friction and best next move
+- Improved desktop and mobile polish
 
 ## Deploy
-Upload the repository to GitHub and import it into Vercel using the `Other` preset. No build command or environment variables are required.
+- Upload all files to GitHub
+- Import the repository in Vercel
+- Framework preset: Other
+- No build command required
+
+The reading path and heatmap are educational simulations, not biometric eye tracking.
