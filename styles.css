@@ -169,3 +169,36 @@ dialog{max-width:720px;border:1px solid var(--line-strong);border-radius:20px;pa
 }
 
 .element-diagnosis{margin:10px 0 0;padding:10px 11px;border-radius:12px;background:#fff;border:1px solid var(--line);font-size:10px;line-height:1.45;color:#4f4940}
+
+
+.creator-footer{margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(180deg,#fff 0%,#fbf8f4 100%);box-shadow:var(--shadow-soft)}
+.creator-copy{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}.creator-copy span{font-size:11px;color:var(--muted)}.creator-copy strong{font-size:13px;letter-spacing:.01em}
+.creator-links{display:flex;align-items:center;gap:8px}.social-link{width:38px;height:38px;display:grid;place-items:center;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);box-shadow:var(--shadow-soft);transition:transform .18s ease,border-color .18s ease,background .18s ease}.social-link:hover{transform:translateY(-2px);border-color:var(--line-strong);background:var(--surface-2)}.social-link:focus-visible{outline:3px solid rgba(185,207,55,.28);outline-offset:2px}.social-link svg{width:18px;height:18px;fill:currentColor}
+@media(max-width:700px){.creator-footer{padding:12px 13px;border-radius:18px}.creator-copy{display:block}.creator-copy span,.creator-copy strong{display:block}.creator-copy strong{margin-top:2px}.social-link{width:36px;height:36px}}
+
+/* V18 luxury creator signature */
+.topbar{display:grid;grid-template-columns:minmax(210px,1fr) auto minmax(210px,1fr);align-items:center;gap:18px;overflow:hidden;position:relative}
+.top-actions{justify-self:end}
+.creator-signature{justify-self:center;display:grid;grid-template-columns:auto auto auto auto;align-items:center;gap:10px;min-width:0;padding:8px 12px;border-radius:999px;position:relative;background:linear-gradient(90deg,rgba(255,255,255,.72),rgba(246,242,235,.9),rgba(255,255,255,.72));border:1px solid rgba(207,197,184,.78);box-shadow:0 8px 22px rgba(32,29,22,.06),inset 0 1px 0 rgba(255,255,255,.9);animation:signatureReveal .8s cubic-bezier(.2,.8,.2,1) both}
+.creator-signature::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;background:linear-gradient(100deg,transparent 10%,rgba(185,207,55,.45) 45%,transparent 75%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;opacity:.75}
+.signature-kicker{font-size:9px;text-transform:uppercase;letter-spacing:.16em;color:var(--muted);font-weight:800;white-space:nowrap;animation:signatureFade .7s .08s both}
+.signature-name{font-size:13px;font-weight:900;letter-spacing:.015em;white-space:nowrap;position:relative;background:linear-gradient(90deg,#1f211c 0%,#5e604d 45%,#1f211c 100%);background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:nameShimmer 4.5s linear infinite,signatureFade .7s .16s both}
+.signature-name::after{content:"";position:absolute;left:0;right:100%;bottom:-3px;height:1px;background:linear-gradient(90deg,var(--accent-strong),transparent);transition:right .25s ease}
+.signature-name:hover::after{right:0}
+.signature-line{width:30px;height:1px;background:linear-gradient(90deg,var(--line-strong),var(--accent-strong));transform-origin:left;animation:lineGrow .8s .22s both}
+.signature-socials{display:flex;gap:6px}
+.signature-icon{width:30px;height:30px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);box-shadow:0 5px 14px rgba(32,29,22,.06);transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease,background .2s ease;animation:iconRise .65s both}
+.signature-icon:nth-child(1){animation-delay:.28s}.signature-icon:nth-child(2){animation-delay:.36s}
+.signature-icon:hover{transform:translateY(-3px) scale(1.04);border-color:#c6d26b;background:#fffef7;box-shadow:0 10px 18px rgba(32,29,22,.11)}
+.signature-icon:active{transform:translateY(-1px) scale(.98)}
+.signature-icon svg{width:15px;height:15px;fill:currentColor}
+.signature-icon.linkedin:hover{color:#0a66c2}.signature-icon.facebook:hover{color:#1877f2}
+@keyframes signatureReveal{from{opacity:0;transform:translateY(-10px) scale(.97);filter:blur(5px)}to{opacity:1;transform:none;filter:none}}
+@keyframes signatureFade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+@keyframes lineGrow{from{transform:scaleX(0);opacity:0}to{transform:scaleX(1);opacity:1}}
+@keyframes iconRise{from{opacity:0;transform:translateY(8px) rotate(-5deg)}to{opacity:1;transform:none}}
+@keyframes nameShimmer{to{background-position:200% center}}
+@media (prefers-reduced-motion:reduce){.creator-signature,.signature-kicker,.signature-name,.signature-line,.signature-icon{animation:none!important}.signature-icon,.signature-name::after{transition:none!important}}
+@media(max-width:980px){.topbar{grid-template-columns:1fr auto}.creator-signature{grid-column:1/-1;grid-row:2;justify-self:stretch;justify-content:center}.top-actions{grid-column:2;grid-row:1}.brand{grid-column:1;grid-row:1}}
+@media(max-width:700px){.topbar{gap:10px}.creator-signature{grid-template-columns:auto auto auto;gap:8px;padding:8px 10px;border-radius:16px}.signature-kicker{display:none}.signature-line{width:20px}.signature-name{font-size:12px}.signature-icon{width:28px;height:28px;border-radius:9px}}
+@media(max-width:380px){.creator-signature{grid-template-columns:1fr auto;justify-content:stretch}.signature-line{display:none}.signature-name{overflow:hidden;text-overflow:ellipsis}}
