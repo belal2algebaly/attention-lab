@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="An interactive, evidence-informed visual attention placement simulator for product pages." />
+  <title>Attention Lab — Visual Placement Simulator</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Evidence-informed UX playground</p>
+        <h1>Attention Lab</h1>
+        <p class="subtitle">Arrange a product page and observe a simulated attention path based on placement, grouping, expectations and gaze direction.</p>
+      </div>
+      <div class="header-actions">
+        <button id="evidenceBtn" class="btn secondary" type="button">Scientific basis</button>
+        <button id="resetBtn" class="btn ghost" type="button">Reset layout</button>
+        <button id="runBtn" class="btn primary" type="button">Run simulation</button>
+      </div>
+    </header>
+
+    <section class="disclaimer" role="note">
+      <strong>Important:</strong> This is a rule-based simulated attention path, not real eye tracking and not a prediction of every user.
+    </section>
+
+    <section class="workspace">
+      <aside class="panel elements-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="step">01</span>
+            <h2>Elements</h2>
+          </div>
+          <p>Drag elements into the page.</p>
+        </div>
+        <div id="palette" class="palette" aria-label="Page elements"></div>
+        <div class="micro-note">Tip: double-click an element in the canvas to return it here.</div>
+      </aside>
+
+      <section class="panel canvas-panel">
+        <div class="panel-heading canvas-heading">
+          <div>
+            <span class="step">02</span>
+            <h2>Product page canvas</h2>
+          </div>
+          <div class="legend"><span></span> Expected task path</div>
+        </div>
+
+        <div id="canvas" class="canvas" aria-label="Interactive product page canvas">
+          <div class="browser-bar"><i></i><i></i><i></i><span>yourstore.com/product</span></div>
+          <div class="fold-line"><span>Initial viewport / fold</span></div>
+          <svg id="pathLayer" class="path-layer" aria-hidden="true"></svg>
+          <div id="dropHint" class="drop-hint">Drop elements anywhere in this area</div>
+        </div>
+      </section>
+
+      <aside class="panel observer-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="step">03</span>
+            <h2>Observer</h2>
+          </div>
+          <p>Feedback updates after each run.</p>
+        </div>
+
+        <div class="observer-card">
+          <div class="avatar" aria-label="Animated observer">
+            <div class="hair"></div>
+            <div class="face">
+              <div class="brow left"></div><div class="brow right"></div>
+              <div class="eye left"><span class="pupil"></span></div>
+              <div class="eye right"><span class="pupil"></span></div>
+              <div id="mouth" class="mouth neutral"></div>
+            </div>
+            <div class="neck"></div><div class="body"></div>
+          </div>
+          <div id="observerText" class="observer-text" aria-live="polite">Arrange the page, then run the simulation.</div>
+        </div>
+
+        <div class="score-card">
+          <div class="score-top"><span>Layout clarity</span><strong id="scoreValue">—</strong></div>
+          <div class="meter"><span id="scoreBar"></span></div>
+          <div id="scoreLabel" class="score-label">Not tested yet</div>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric"><span>Expected placement</span><strong id="placementMetric">—</strong></div>
+          <div class="metric"><span>Grouping</span><strong id="groupingMetric">—</strong></div>
+          <div class="metric"><span>Crowding</span><strong id="crowdingMetric">—</strong></div>
+          <div class="metric"><span>Task flow</span><strong id="flowMetric">—</strong></div>
+        </div>
+
+        <div class="findings">
+          <h3>Findings</h3>
+          <ol id="findingsList"><li>Run the simulation to generate findings.</li></ol>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <dialog id="evidenceDialog" class="dialog">
+    <button id="closeDialog" class="dialog-close" aria-label="Close">×</button>
+    <p class="eyebrow">Methodology</p>
+    <h2>What the simulation uses</h2>
+    <div class="evidence-list">
+      <article><h3>Spatial expectations</h3><p>Common interface conventions inform where users are likely to search for familiar controls. The simulation rewards conventional relationships such as price near title and CTA after selection controls.</p></article>
+      <article><h3>Gestalt proximity & grouping</h3><p>Objects placed near one another are more likely to be perceived as related. The tool checks distances among product information, variants and the action.</p></article>
+      <article><h3>Visual crowding</h3><p>Recognition becomes harder when multiple objects compete within a small region. The tool penalizes overlapping and tightly packed elements.</p></article>
+      <article><h3>Gaze cueing</h3><p>Observed eye or head direction can orient attention toward the gazed-at location. The model-image element can point toward another element and modestly boost it.</p></article>
+      <article><h3>Task-based sequence</h3><p>The path is modeled around a shopping task: identify the product, evaluate key information, select an option, then act. This is a design hypothesis, not a universal biological reading pattern.</p></article>
+    </div>
+    <div class="sources">
+      <h3>Selected references</h3>
+      <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3070834/" target="_blank" rel="noreferrer">Whitney & Levi — Visual crowding review</a>
+      <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC1950440/" target="_blank" rel="noreferrer">Frischen, Bayliss & Tipper — Gaze cueing review</a>
+      <a href="https://www.interaction-design.org/literature/topics/gestalt-principles" target="_blank" rel="noreferrer">Gestalt principles overview and design applications</a>
+    </div>
+  </dialog>
+
+  <script src="script.js"></script>
+</body>
+</html>
