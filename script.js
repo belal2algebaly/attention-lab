@@ -13,14 +13,26 @@ const defs = [
   { id: 'stickyCta', label: 'Sticky CTA bar', icon: '▁', desc: 'Secondary action support', category: 'extra', importance: 0.72 }
 ];
 
-const initialDefaults = {
-  image: [16, 22],
-  title: [16, 258],
-  rating: [16, 330],
-  price: [16, 398],
-  variants: [16, 466],
-  cta: [16, 538]
-};
+function getInitialDefaults() {
+  const mobile = window.matchMedia('(max-width: 700px)').matches;
+  return mobile ? {
+    image: [10, 12],
+    title: [10, 154],
+    rating: [10, 202],
+    price: [10, 250],
+    variants: [10, 298],
+    cta: [10, 346],
+    trust: [10, 394]
+  } : {
+    image: [16, 22],
+    title: [16, 258],
+    rating: [16, 318],
+    price: [16, 378],
+    variants: [16, 438],
+    cta: [16, 498],
+    trust: [16, 558]
+  };
+}
 
 const stages = [
   ['image', 'title', 'rating'],
@@ -168,7 +180,7 @@ function buildPaletteItem(d, mobile = false) {
   if (!mobile) el.addEventListener('dragstart', () => dragId = d.id);
   el.addEventListener('click', () => {
     if (!placed.has(d.id)) {
-      const p = initialDefaults[d.id] || [16, Math.min(contentLayer.scrollHeight - 90, 580 + (placed.size * 44))];
+      const p = getInitialDefaults()[d.id] || [16, Math.min(contentLayer.scrollHeight - 90, 580 + (placed.size * 44))];
       add(d.id, p[0], p[1]);
       selectedElementId = d.id;
       updateActiveLabel();
@@ -234,14 +246,24 @@ function remove(id) {
 }
 
 function reset() {
+  if (active?.el) active.el.classList.remove('dragging');
+  active = null;
+  dragId = null;
+  document.removeEventListener('pointermove', moveDrag);
   [...placed.values()].forEach(el => el.remove());
   placed.clear();
-  Object.entries(initialDefaults).forEach(([id, pos]) => add(id, pos[0], pos[1]));
   presetSelect.value = 'custom';
+  modeSelect.value = 'task';
   screen.scrollTop = 0;
   selectedElementId = null;
   lastComposite = 0;
-  schedule();
+  Object.entries(getInitialDefaults()).forEach(([id, pos]) => add(id, pos[0], pos[1]));
+  syncPalette();
+  updateActiveLabel();
+  requestAnimationFrame(() => {
+    screen.scrollTop = 0;
+    analyze();
+  });
 }
 
 contentLayer.addEventListener('dragover', e => e.preventDefault());
@@ -889,29 +911,42 @@ function drawHeatmap(per, metrics) {
     .map(([id, el]) => ({ id, point: center(el), score: elementAttention(id, per, metrics) }))
     .sort((a, b) => b.score - a.score);
 
+  const maxScore = ranked[0]?.score || 1;
+  const minScore = ranked[ranked.length - 1]?.score || 0;
+  const spread = Math.max(8, maxScore - minScore);
+
   ranked.forEach((entry, idx) => {
-    const size = clamp(entry.score * 2.65, 76, 250);
-    const color = entry.score > 70 ? 'rgba(255,96,78,.50)' : entry.score > 52 ? 'rgba(255,176,66,.42)' : 'rgba(255,223,98,.30)';
+    const normalized = clamp((entry.score - minScore) / spread, 0, 1);
+    const size = 72 + normalized * 170;
+    const palette = normalized >= .78
+      ? { core:'rgba(239,68,68,.62)', mid:'rgba(249,115,22,.32)' }
+      : normalized >= .52
+        ? { core:'rgba(249,115,22,.54)', mid:'rgba(250,204,21,.28)' }
+        : normalized >= .28
+          ? { core:'rgba(250,204,21,.44)', mid:'rgba(163,230,53,.20)' }
+          : { core:'rgba(59,130,246,.30)', mid:'rgba(34,197,94,.14)' };
+
     const spot = document.createElement('div');
     spot.className = 'heat-spot';
     spot.style.left = `${entry.point.x}px`;
     spot.style.top = `${entry.point.y}px`;
     spot.style.width = `${size}px`;
     spot.style.height = `${size}px`;
-    spot.style.background = `radial-gradient(circle, ${color} 0%, rgba(255,224,115,.20) 42%, rgba(255,250,240,0) 78%)`;
+    spot.style.opacity = `${0.58 + normalized * 0.38}`;
+    spot.style.background = `radial-gradient(circle, ${palette.core} 0%, ${palette.mid} 38%, rgba(255,255,255,0) 76%)`;
     heatmapLayer.appendChild(spot);
 
-    if (idx < 3) {
+    if (idx < 4) {
       const tag = document.createElement('div');
       tag.className = 'heat-tag';
       tag.style.left = `${entry.point.x}px`;
       tag.style.top = `${entry.point.y}px`;
       tag.textContent = `${idx + 1}`;
+      tag.title = `${labelFor(entry.id)} attention index: ${entry.score.toFixed(1)}`;
       heatmapLayer.appendChild(tag);
     }
   });
 }
-
 function grade(n) {
   if (n >= 85) return 'Strong';
   if (n >= 70) return 'Good';
@@ -1178,5 +1213,32 @@ document.getElementById('mobileSheetClose')?.addEventListener('click', closeMobi
 document.getElementById('mobileSheetBackdrop')?.addEventListener('click', closeMobileElementSheet);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMobileElementSheet(); });
 
+
+function openWelcome() {
+  const modal = document.getElementById('welcomeModal');
+  if (!modal) return;
+  modal.hidden = false;
+  document.body.classList.add('welcome-open');
+  requestAnimationFrame(() => modal.classList.add('is-visible'));
+}
+
+function closeWelcome() {
+  const modal = document.getElementById('welcomeModal');
+  if (!modal) return;
+  modal.classList.remove('is-visible');
+  document.body.classList.remove('welcome-open');
+  window.setTimeout(() => { modal.hidden = true; }, 260);
+  try { sessionStorage.setItem('attentionLabWelcomeSeen', '1'); } catch (_) {}
+}
+
+document.getElementById('welcomeStartBtn')?.addEventListener('click', closeWelcome);
+document.getElementById('welcomeCloseBtn')?.addEventListener('click', closeWelcome);
+document.getElementById('welcomeBackdrop')?.addEventListener('click', closeWelcome);
+
 renderPalette();
-setTimeout(reset, 50);
+setTimeout(() => {
+  reset();
+  let seen = false;
+  try { seen = sessionStorage.getItem('attentionLabWelcomeSeen') === '1'; } catch (_) {}
+  if (!seen) openWelcome();
+}, 50);

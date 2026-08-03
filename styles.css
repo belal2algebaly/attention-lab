@@ -338,3 +338,45 @@ body.sheet-open{overflow:hidden}
   .content-layer{min-height:820px}
   .viewport-marker{top:304px}
 }
+
+/* V22 onboarding, compact mobile mockup, and stronger heatmap hierarchy */
+body.welcome-open{overflow:hidden}
+.welcome-modal[hidden]{display:none}
+.welcome-modal{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:20px}
+.welcome-backdrop{position:absolute;inset:0;border:0;background:rgba(27,26,22,.58);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.welcome-card{position:relative;z-index:1;width:min(520px,100%);padding:34px;border:1px solid rgba(255,255,255,.55);border-radius:30px;background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(247,243,236,.95));box-shadow:0 28px 80px rgba(20,20,16,.28);text-align:center;opacity:0;transform:translateY(18px) scale(.96);transition:opacity .26s ease,transform .26s cubic-bezier(.2,.8,.2,1);overflow:hidden}
+.welcome-modal.is-visible .welcome-card{opacity:1;transform:translateY(0) scale(1)}
+.welcome-card::before{content:"";position:absolute;inset:-35% auto auto -15%;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(220,231,138,.38),transparent 70%);pointer-events:none}
+.welcome-close{position:absolute;top:15px;right:15px;width:34px;height:34px;border:1px solid var(--line);border-radius:50%;background:#fff;color:var(--ink);font-size:20px;cursor:pointer}
+.welcome-orbit{position:relative;width:84px;height:84px;margin:0 auto 18px;border:1px solid rgba(185,207,55,.45);border-radius:50%;animation:welcomeSpin 10s linear infinite}
+.welcome-orbit::before{content:"A";position:absolute;inset:17px;display:grid;place-items:center;border-radius:50%;background:var(--ink);color:#fff;font-size:24px;font-weight:900;box-shadow:0 10px 25px rgba(31,33,28,.2)}
+.welcome-orbit span{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--accent-strong);box-shadow:0 0 0 5px rgba(185,207,55,.12)}
+.welcome-orbit span:nth-child(1){top:-5px;left:37px}.welcome-orbit span:nth-child(2){right:2px;bottom:12px}.welcome-orbit span:nth-child(3){left:2px;bottom:12px}
+.welcome-kicker{display:inline-flex;padding:6px 10px;border-radius:999px;background:var(--surface-3);border:1px solid var(--line);font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.13em;color:var(--muted)}
+.welcome-card h1{margin:14px 0 10px;font-size:34px;line-height:1.08}.welcome-card h1 em{font-style:normal;background:linear-gradient(90deg,#899b1f,#1f211c);-webkit-background-clip:text;background-clip:text;color:transparent}
+.welcome-card>p{max-width:430px;margin:0 auto;color:var(--muted);font-size:13px;line-height:1.65}
+.welcome-byline{display:flex;align-items:center;justify-content:center;gap:7px;margin:18px 0 12px}.welcome-byline span{font-size:11px;color:var(--muted)}.welcome-byline strong{font-size:13px}
+.welcome-socials{display:flex;justify-content:center;gap:9px}.welcome-socials a{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font-size:11px;font-weight:800;box-shadow:var(--shadow-soft);transition:transform .18s ease,border-color .18s ease}.welcome-socials a:hover{transform:translateY(-2px);border-color:var(--line-strong)}.welcome-socials svg{width:16px;height:16px;fill:currentColor}
+.welcome-start{width:100%;margin-top:18px;padding:14px 18px;border:0;border-radius:16px;background:linear-gradient(180deg,#24271f,#12150f);color:#fff;display:flex;align-items:center;justify-content:center;gap:10px;font-weight:900;cursor:pointer;box-shadow:0 14px 28px rgba(31,33,28,.2)}.welcome-start strong{font-size:20px;transition:transform .18s ease}.welcome-start:hover strong{transform:translateX(4px)}
+.welcome-card>small{display:block;margin-top:11px;font-size:9px;color:var(--muted)}
+@keyframes welcomeSpin{to{transform:rotate(360deg)}}
+
+@media(max-width:700px){
+  .phone-shell{width:100%;max-width:263px;margin:0 auto;padding:9px;border-radius:24px}
+  .phone{max-width:245px}
+  .screen{height:382px}
+  .content-layer{min-height:800px}
+  .viewport-marker{top:292px}
+  .welcome-modal{padding:12px}
+  .welcome-card{padding:28px 18px 22px;border-radius:24px}
+  .welcome-card h1{font-size:27px}
+  .welcome-card>p{font-size:12px}
+}
+@media(max-width:390px){
+  .phone-shell{max-width:263px}
+  .phone{max-width:243px}
+  .screen{height:372px}
+  .content-layer{min-height:780px}
+  .viewport-marker{top:284px}
+}
+@media(prefers-reduced-motion:reduce){.welcome-orbit{animation:none}.welcome-card{transition:none}}
