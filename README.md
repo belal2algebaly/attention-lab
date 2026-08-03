@@ -1,13 +1,14 @@
-# Attention Lab — Live Mobile Placement Simulator
+# Attention Lab V3
 
-A static HTML/CSS/JavaScript educational tool for exploring mobile product-page element placement.
+A static, live mobile product-page placement simulator.
 
-## What changed in this version
-- Live scoring while dragging; no Run button.
-- Mobile viewport with a fixed store header.
-- Three switchable analysis lenses: Product Task Flow, Gutenberg Diagram (explicitly labelled a heuristic), and Grouping & Crowding.
-- Hard visibility constraints: overlap and occlusion directly reduce scores; hidden price or CTA caps the total score.
-- Pointer-based dragging works with mouse and touch.
+## What changed in V3
+- Removed the separate gaze-cue model.
+- Product Flow is the clear default methodology.
+- Live analysis updates during dragging.
+- Critical visibility rules prevent a good score when Price or Add to Cart is missing or covered.
+- Simplified results: Visibility, Sequence, Grouping.
+- Optional comparison modes: Grouping & Visibility and Gutenberg heuristic.
 
 ## Deploy
-Upload the files to a GitHub repository and import it into Vercel using the `Other` preset. No build command is required.
+Upload the repository to GitHub and import it into Vercel using the `Other` preset. No build command or environment variables are required.

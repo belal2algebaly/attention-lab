@@ -1,121 +1,102 @@
 <!doctype html>
-<html lang="en" dir="ltr">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Interactive evidence-informed mobile visual attention and element placement simulator." />
-  <title>Attention Lab — Live Mobile Placement Simulator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="A live mobile product-page placement simulator for visibility, sequence and grouping." />
+  <title>Attention Lab V3</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <main class="app-shell">
-    <header class="topbar">
+  <main class="app">
+    <header class="hero">
       <div>
-        <p class="eyebrow">Evidence-informed UX playground</p>
+        <span class="kicker">LIVE UX PLACEMENT SIMULATOR</span>
         <h1>Attention Lab</h1>
-        <p class="subtitle">Move elements inside a mobile product page. The reading, eye path and score update live—no Run button required.</p>
+        <p>Move product-page elements inside the phone. The analysis updates instantly and explains what became easier or harder to notice.</p>
       </div>
-      <div class="header-actions">
-        <button id="evidenceBtn" class="btn secondary" type="button">Scientific basis</button>
-        <button id="resetBtn" class="btn ghost" type="button">Reset layout</button>
+      <div class="hero-actions">
+        <button id="resetBtn" class="btn secondary" type="button">Reset layout</button>
+        <button id="methodBtn" class="btn" type="button">How it works</button>
       </div>
     </header>
 
-    <section class="disclaimer" role="note">
-      <strong>Live simulation:</strong> this is a rule-based educational model, not real eye tracking. Occluded or overlapping content is treated as a hard usability failure.
-    </section>
-
-    <section class="mode-bar panel">
+    <section class="toolbar">
       <div>
-        <span class="step">MODE</span>
-        <div><strong>Analysis principle</strong><small>Switch the scoring lens without changing the layout.</small></div>
+        <strong>Analysis lens</strong>
+        <span>Use Product Flow by default. Other modes are comparison lenses.</span>
       </div>
-      <select id="modeSelect" aria-label="Analysis principle">
-        <option value="task">Product task flow — recommended</option>
-        <option value="gutenberg">Gutenberg diagram — heuristic</option>
-        <option value="grouping">Grouping & crowding — perceptual</option>
+      <select id="modeSelect" aria-label="Analysis lens">
+        <option value="task">Product Flow — recommended</option>
+        <option value="grouping">Grouping & Visibility</option>
+        <option value="gutenberg">Gutenberg — heuristic</option>
       </select>
     </section>
 
     <section class="workspace">
-      <aside class="panel elements-panel">
-        <div class="panel-heading">
-          <div><span class="step">01</span><h2>Elements</h2></div>
-          <p>Drag into the phone.</p>
-        </div>
-        <div id="palette" class="palette" aria-label="Page elements"></div>
-        <div class="micro-note">Move an item by dragging it. Double-click it to return it here. Double-click the model to flip gaze.</div>
+      <aside class="panel palette-panel">
+        <div class="panel-title"><span>1</span><div><h2>Page elements</h2><p>Drag an item into the phone.</p></div></div>
+        <div id="palette" class="palette"></div>
+        <p class="hint">Double-click an element inside the phone to remove it.</p>
       </aside>
 
-      <section class="panel canvas-panel">
-        <div class="panel-heading canvas-heading">
-          <div><span class="step">02</span><h2>Mobile product page</h2></div>
-          <div class="live-status"><i></i> Live analysis</div>
-        </div>
-
-        <div class="phone-wrap">
-          <div class="phone-shell">
-            <div class="phone-notch"></div>
-            <div id="canvas" class="canvas" aria-label="Interactive mobile product page canvas">
-              <header class="store-header">
-                <button aria-label="Menu">☰</button><strong>YOUR STORE</strong><button aria-label="Cart">Bag</button>
-              </header>
-              <div class="page-content-grid"></div>
-              <div class="fold-line"><span>Initial viewport fold</span></div>
-              <svg id="pathLayer" class="path-layer" aria-hidden="true"></svg>
-              <div id="dropHint" class="drop-hint">Drop page elements here</div>
-            </div>
+      <section class="panel phone-panel">
+        <div class="panel-title"><span>2</span><div><h2>Mobile product page</h2><p><i class="live-dot"></i> Live analysis</p></div></div>
+        <div class="phone">
+          <div class="notch"></div>
+          <div id="canvas" class="screen">
+            <header class="store-header">
+              <button type="button" aria-label="Menu">☰</button>
+              <strong>NOVA</strong>
+              <button type="button" aria-label="Cart">Bag</button>
+            </header>
+            <div class="screen-grid"></div>
+            <div class="fold"><span>initial viewport</span></div>
+            <svg id="pathLayer" class="path-layer" aria-hidden="true"></svg>
+            <div id="emptyHint" class="empty-hint">Drag product elements here</div>
           </div>
         </div>
       </section>
 
-      <aside class="panel observer-panel">
-        <div class="panel-heading">
-          <div><span class="step">03</span><h2>Live reading</h2></div>
-          <p id="modeNote">Task completion model</p>
+      <aside class="panel results-panel">
+        <div class="panel-title"><span>3</span><div><h2>Live result</h2><p id="modeText">Can the shopper identify, evaluate, choose and act?</p></div></div>
+
+        <div class="score-block">
+          <div class="score-head"><span>Page clarity</span><strong id="score">—</strong></div>
+          <div class="score-track"><span id="scoreFill"></span></div>
+          <div id="scoreState" class="score-state">Waiting for layout</div>
         </div>
 
-        <div class="observer-card">
-          <div class="avatar" aria-label="Animated observer">
-            <div class="hair"></div><div class="face"><div class="brow left"></div><div class="brow right"></div><div class="eye left"><span class="pupil"></span></div><div class="eye right"><span class="pupil"></span></div><div id="mouth" class="mouth neutral"></div></div><div class="neck"></div><div class="body"></div>
-          </div>
-          <div id="observerText" class="observer-text" aria-live="polite">The simulation updates as soon as you move an element.</div>
+        <div class="metrics">
+          <div><span>Visibility</span><strong id="visibility">—</strong></div>
+          <div><span>Sequence</span><strong id="sequence">—</strong></div>
+          <div><span>Grouping</span><strong id="grouping">—</strong></div>
         </div>
 
-        <div class="score-card">
-          <div class="score-top"><span>Layout clarity</span><strong id="scoreValue">—</strong></div>
-          <div class="meter"><span id="scoreBar"></span></div>
-          <div id="scoreLabel" class="score-label">Waiting for layout</div>
+        <div id="criticalBanner" class="critical-banner" hidden></div>
+
+        <div class="reading-card">
+          <span class="reading-label">What the shopper experiences</span>
+          <p id="shopperText">Move an element to start the live simulation.</p>
         </div>
 
-        <div class="metrics-grid">
-          <div class="metric"><span>Visibility</span><strong id="visibilityMetric">—</strong></div>
-          <div class="metric"><span>Placement</span><strong id="placementMetric">—</strong></div>
-          <div class="metric"><span>Grouping</span><strong id="groupingMetric">—</strong></div>
-          <div class="metric"><span>Flow / mode fit</span><strong id="flowMetric">—</strong></div>
+        <div class="findings">
+          <h3>What changed</h3>
+          <ul id="findings"><li>No findings yet.</li></ul>
         </div>
-
-        <div class="findings"><h3>Live findings</h3><ol id="findingsList"><li>Move an element to begin.</li></ol></div>
       </aside>
     </section>
   </main>
 
-  <dialog id="evidenceDialog" class="dialog">
+  <dialog id="methodDialog">
     <button id="closeDialog" class="dialog-close" aria-label="Close">×</button>
-    <p class="eyebrow">Methodology</p>
-    <h2>What each mode means</h2>
-    <div class="evidence-list">
-      <article><h3>Product task flow</h3><p>The recommended mode. It tests whether a shopper can identify the product, evaluate title, reviews and price, select an option, then reach the primary action. This is a task model, not a universal eye pattern.</p></article>
-      <article><h3>Grouping & crowding</h3><p>Related elements should form a readable cluster without overlap. Nearby irrelevant objects and occlusion reduce identification. Complete or partial covering is penalized directly.</p></article>
-      <article><h3>Gutenberg diagram</h3><p>A historical layout heuristic that divides a page into primary optical, strong fallow, weak fallow and terminal areas. It is included as an optional exploratory lens, not presented as a biological law or precise prediction.</p></article>
-      <article><h3>Gaze cueing</h3><p>The direction of an observed face can shift attention toward the gazed-at side. The model provides only a small directional adjustment and never overrides visibility or task completion.</p></article>
-    </div>
-    <div class="sources">
-      <h3>Selected evidence</h3>
-      <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3070834/" target="_blank" rel="noreferrer">Whitney & Levi — Visual crowding review</a>
-      <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC1950440/" target="_blank" rel="noreferrer">Frischen, Bayliss & Tipper — Gaze cueing review</a>
-      <p>Gutenberg is deliberately labelled a heuristic. The tool does not claim that every user follows one fixed scan path.</p>
-    </div>
+    <span class="kicker">METHODOLOGY</span>
+    <h2>What this tool actually measures</h2>
+    <p>This is a rule-based educational simulation, not real eye tracking.</p>
+    <article><h3>Product Flow</h3><p>Checks whether the page supports a practical shopping sequence: identify the product, understand it, evaluate price and options, then reach the primary action.</p></article>
+    <article><h3>Grouping & Visibility</h3><p>Checks whether related information is close enough to read as one unit and whether any element is partially or fully covered.</p></article>
+    <article><h3>Gutenberg</h3><p>An optional historical layout heuristic. It is included for comparison only and is not treated as a universal biological law.</p></article>
+    <article><h3>Hard rule</h3><p>Critical content cannot receive a good score when it is missing or obscured. Price and Add to Cart are treated as task-critical.</p></article>
   </dialog>
 
   <script src="script.js"></script>
