@@ -1,14 +1,25 @@
-# Attention Lab V24 — Viewport Audit
+# Attention Lab V10
 
-Interactive static product-page attention simulator.
+Interactive static web app for simulating mobile product-page attention and layout clarity.
 
-## V24 fixes
+## What's new in V10
 
-- Calculates the initial content viewport from the real rendered phone height on each device
-- Measures full element coverage, not only whether an element's top edge is above the fold
-- A partially visible Add to Cart is now an action blocker
-- Mobile and desktop use the same geometry model with their own live dimensions
-- Critical coverage, action readiness, character mood, recommendations, and score caps now share the same viewport logic
-- Adds explicit findings for partially visible Price and Variants
+- Fixed drag behavior for placed elements to feel smoother and more stable
+- Clearer eye-tracking visualization with a stronger attention path and ranked heatmap markers
+- Softer light theme inspired by the earlier calm color palette
+- More premium phone mockup styling
+- Smaller phone mockup on mobile so the shopper character appears below it more comfortably
+- Refined premium UI styling across the whole app
 
-Scores remain heuristic comparison indices, not biometric eye-tracking probabilities.
+## Deploy
+
+This is a static site.
+
+- Upload the files to GitHub
+- Import the repo into Vercel
+- Framework preset: **Other**
+- No build command needed
+
+## Important note
+
+The heatmap and attention path are **simulated educational outputs**, not real biometric eye tracking.

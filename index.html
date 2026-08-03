@@ -32,58 +32,12 @@
     </iframe>
   </noscript>
   <!-- End Google Tag Manager (noscript) -->
-
-  <div id="welcomeModal" class="welcome-modal" hidden aria-hidden="false">
-    <button id="welcomeBackdrop" class="welcome-backdrop" type="button" aria-label="Close welcome screen"></button>
-    <section class="welcome-card" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
-      <button id="welcomeCloseBtn" class="welcome-close" type="button" aria-label="Close">×</button>
-      <div class="welcome-orbit" aria-hidden="true"><span></span><span></span><span></span></div>
-      <span class="welcome-kicker">Interactive UX experiment</span>
-      <h1 id="welcomeTitle">Welcome to <em>Attention Lab</em></h1>
-      <p>Move product-page elements, observe the simulated attention path, and learn how placement changes clarity, grouping, and purchase flow.</p>
-      <div class="welcome-byline">
-        <span>Built by</span>
-        <strong>Belal Algebaly</strong>
-      </div>
-      <div class="welcome-socials">
-        <a href="https://www.linkedin.com/in/belal-algebaly-2ab015308/" target="_blank" rel="noopener noreferrer" aria-label="Belal Algebaly on LinkedIn">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 8.4H3.2V19h3.3V8.4ZM4.85 3A1.93 1.93 0 1 0 4.84 6.86 1.93 1.93 0 0 0 4.85 3ZM19 13.05c0-3.2-1.7-4.69-3.98-4.69a3.43 3.43 0 0 0-3.12 1.72V8.4H8.6V19h3.3v-5.24c0-1.38.26-2.72 1.98-2.72 1.7 0 1.72 1.59 1.72 2.81V19H19v-5.95Z"/></svg>
-          <span>LinkedIn</span>
-        </a>
-        <a href="https://www.facebook.com/profile.php?id=61585212901611" target="_blank" rel="noopener noreferrer" aria-label="Belal Algebaly on Facebook">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.7 21v-8h2.7l.4-3.1h-3.1v-2c0-.9.25-1.5 1.56-1.5h1.67V3.62a22.4 22.4 0 0 0-2.43-.12c-2.4 0-4.05 1.46-4.05 4.15v2.25H7.75V13h2.72v8h3.23Z"/></svg>
-          <span>Facebook</span>
-        </a>
-      </div>
-      <button id="welcomeStartBtn" class="welcome-start" type="button">
-        <span>Start exploring</span>
-        <strong>→</strong>
-      </button>
-      <small>Rule-based educational simulation — not biometric eye tracking.</small>
-    </section>
-  </div>
-
   <main class="app-shell">
     <header class="topbar">
       <a class="brand" href="#" aria-label="Attention Lab home">
         <span class="brand-mark">A</span>
         <span><strong>Attention Lab</strong><small>Visual attention simulator</small></span>
       </a>
-
-      <div class="creator-signature" aria-label="Created by Belal Algebaly">
-        <span class="signature-kicker">Created by</span>
-        <a class="signature-name" href="https://www.linkedin.com/in/belal-algebaly-2ab015308/" target="_blank" rel="noopener noreferrer">Belal Algebaly</a>
-        <span class="signature-line" aria-hidden="true"></span>
-        <div class="signature-socials">
-          <a class="signature-icon linkedin" href="https://www.linkedin.com/in/belal-algebaly-2ab015308/" target="_blank" rel="noopener noreferrer" aria-label="Belal Algebaly on LinkedIn">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 8.4H3.2V19h3.3V8.4ZM4.85 3A1.93 1.93 0 1 0 4.84 6.86 1.93 1.93 0 0 0 4.85 3ZM19 13.05c0-3.2-1.7-4.69-3.98-4.69a3.43 3.43 0 0 0-3.12 1.72V8.4H8.6V19h3.3v-5.24c0-1.38.26-2.72 1.98-2.72 1.7 0 1.72 1.59 1.72 2.81V19H19v-5.95Z"/></svg>
-          </a>
-          <a class="signature-icon facebook" href="https://www.facebook.com/profile.php?id=61585212901611" target="_blank" rel="noopener noreferrer" aria-label="Belal Algebaly on Facebook">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.7 21v-8h2.7l.4-3.1h-3.1v-2c0-.9.25-1.5 1.56-1.5h1.67V3.62a22.4 22.4 0 0 0-2.43-.12c-2.4 0-4.05 1.46-4.05 4.15v2.25H7.75V13h2.72v8h3.23Z"/></svg>
-          </a>
-        </div>
-      </div>
-
       <div class="top-actions">
         <button id="resetBtn" class="ghost-btn" type="button">Reset</button>
         <button id="methodBtn" class="solid-btn" type="button">Scientific basis</button>
@@ -97,7 +51,7 @@
       </div>
       <label class="field">
         <span>Preset</span>
-        <select id="presetSelect" aria-label="Layout preset">
+        <select id="presetSelect" class="ui-select" aria-label="Layout preset">
           <option value="custom">Custom layout</option>
           <option value="balanced">Balanced PDP</option>
           <option value="conversion">Conversion-focused</option>
@@ -106,7 +60,7 @@
       </label>
       <label class="field">
         <span>Lens</span>
-        <select id="modeSelect" aria-label="Analysis lens">
+        <select id="modeSelect" class="ui-select" aria-label="Analysis lens">
           <option value="task">Product Flow</option>
           <option value="grouping">Grouping & Visibility</option>
           <option value="gutenberg">Gutenberg comparison</option>
@@ -158,10 +112,6 @@
                   </div>
                 </div>
               </div>
-              <button id="mobileAddBtn" class="mobile-add-btn" type="button" aria-expanded="false" aria-controls="mobileElementSheet">
-                <span aria-hidden="true">+</span>
-                <strong>Add element</strong>
-              </button>
             </div>
             <div class="overlay-guide" aria-hidden="true">
               <span><i class="guide path"></i> Attention path</span>
@@ -186,9 +136,7 @@
                   <circle class="eye left" cx="70" cy="82" r="5.5"/>
                   <circle class="eye right" cx="111" cy="82" r="5.5"/>
                   <path class="nose" d="M91 84l-4 15h8"/>
-                  <path class="mouth mouth-smile" d="M72 111c10 8 26 8 36 0"/>
-                  <path class="mouth mouth-flat" d="M77 113c8-2 18-1 26 2"/>
-                  <path class="mouth mouth-frown" d="M72 118c10-10 26-10 36 0"/>
+                  <path class="mouth" d="M72 111c10 8 26 8 36 0"/>
                 </svg>
               </div>
               <div class="speech">
@@ -238,20 +186,6 @@
       </section>
     </section>
 
-    <div id="mobileElementSheet" class="mobile-element-sheet" hidden>
-      <button id="mobileSheetBackdrop" class="mobile-sheet-backdrop" type="button" aria-label="Close elements"></button>
-      <section class="mobile-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="mobileSheetTitle">
-        <div class="mobile-sheet-head">
-          <div>
-            <span class="eyebrow">Page elements</span>
-            <strong id="mobileSheetTitle">Add to the mockup</strong>
-          </div>
-          <button id="mobileSheetClose" class="mobile-sheet-close" type="button" aria-label="Close">×</button>
-        </div>
-        <div id="mobilePalette" class="mobile-palette"></div>
-      </section>
-    </div>
-
     <section class="recommendation-suite">
       <div class="suite-heading">
         <div>
@@ -281,8 +215,6 @@
         </article>
       </div>
     </section>
-
-
   </main>
 
   <dialog id="methodDialog">

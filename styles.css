@@ -39,7 +39,21 @@ a{text-decoration:none;color:inherit}
 .eyebrow{display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#7a756b;font-weight:800}
 .control-copy strong{display:block;font-size:18px;margin-top:5px}
 .field span{display:block;font-size:10px;font-weight:800;color:#7a756b;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
-.field select{width:100%;padding:12px 14px;font-weight:700;appearance:none;cursor:pointer;box-shadow:var(--shadow-soft)}
+.field select{
+  width:100%;
+  padding:12px 44px 12px 14px;
+  font-weight:700;
+  appearance:none;
+  -webkit-appearance:none;
+  -moz-appearance:none;
+  cursor:pointer;
+  box-shadow:var(--shadow-soft);
+  background-color:#fff;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23756f63' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 14px center;
+  background-size:16px;
+}
 .heat-toggle{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;box-shadow:var(--shadow-soft)}
 .heat-toggle strong{display:block;font-size:13px}.heat-toggle small{display:block;font-size:10px;color:var(--muted)}
 .heat-icon{width:28px;height:28px;display:grid;place-items:center;border-radius:999px;background:var(--surface-2);border:1px solid var(--line)}
@@ -152,7 +166,7 @@ dialog{max-width:720px;border:1px solid var(--line-strong);border-radius:20px;pa
 @media (max-width:700px){
   .app-shell{padding:8px 8px 26px}
   .topbar{padding:12px;border-radius:18px}.brand small{display:none}.brand-mark{width:34px;height:34px}.top-actions .solid-btn{font-size:0;padding:10px 12px}.top-actions .solid-btn::after{content:"Basis";font-size:11px}.ghost-btn{font-size:11px;padding:9px 11px}
-  .control-dock{grid-template-columns:1fr 1fr;gap:8px;padding:10px;border-radius:18px}.control-copy{grid-column:1/-1}.control-copy strong{font-size:14px}.control-copy .eyebrow{display:none}.field span{display:none}.field select{padding:10px 12px;font-size:11px}.heat-toggle{grid-column:1/-1;justify-content:center;padding:10px 12px}
+  .control-dock{grid-template-columns:1fr 1fr;gap:8px;padding:10px;border-radius:18px}.control-copy{grid-column:1/-1}.control-copy strong{font-size:14px}.control-copy .eyebrow{display:none}.field span{display:none}.field select{padding:10px 38px 10px 12px;font-size:11px;background-position:right 12px center;background-size:15px}.heat-toggle{grid-column:1/-1;justify-content:center;padding:10px 12px}
   .canvas-pane,.library-pane,.recommendation-suite{padding:12px;border-radius:20px}
   .canvas-heading h1{font-size:20px}.canvas-heading .eyebrow{display:none}
   .experience-stage{gap:12px}.phone-shell{padding:10px}.phone{max-width:330px;padding:8px;border-radius:40px}.notch{top:9px;width:102px;height:32px}.side-button{top:245px;height:62px}.screen{height:565px;border-radius:29px}.store-header{height:82px;padding:30px 16px 12px}.content-layer{min-height:990px}.viewport-marker{top:446px}.canvas-item[data-type=image]{height:190px}.canvas-item[data-type=image],.canvas-item[data-type=variants],.canvas-item[data-type=cta],.canvas-item[data-type=stickyCta]{width:calc(100% - 24px)}
@@ -236,7 +250,7 @@ body.sheet-open{overflow:hidden}
   .creator-signature{grid-column:1/-1;padding:5px 8px;min-height:32px;gap:6px;border-radius:12px}.signature-name{font-size:10px}.signature-line{width:14px}.signature-icon{width:24px;height:24px;border-radius:8px}.signature-icon svg{width:12px;height:12px}
 
   .control-dock{display:flex;align-items:center;gap:5px;padding:6px;margin-bottom:6px;border-radius:15px;overflow-x:auto;box-shadow:var(--shadow-soft)}
-  .control-copy{display:none}.field{min-width:0;flex:1 0 118px}.field select{height:34px;padding:7px 9px;border-radius:10px;font-size:9px;box-shadow:none}
+  .control-copy{display:none}.field{min-width:0;flex:1 0 118px}.field select{height:34px;padding:7px 32px 7px 9px;border-radius:10px;font-size:9px;box-shadow:none;background-position:right 9px center;background-size:13px}
   .heat-toggle{flex:0 0 auto;grid-column:auto;padding:5px 8px;min-height:34px;border-radius:10px;gap:6px}.heat-icon{width:21px;height:21px}.heat-toggle strong{font-size:9px}.heat-toggle small{display:none}
 
   .studio-grid{display:block}.canvas-pane{padding:8px;border-radius:17px}.library-pane{display:none}
