@@ -297,3 +297,44 @@ body.sheet-open{overflow:hidden}
   .content-layer{min-height:750px}
   .viewport-marker{top:270px}
 }
+
+/* V21 mobile mockup proportion correction */
+@media(max-width:700px){
+  .phone-shell{
+    width:100%;
+    max-width:302px;
+    margin:0 auto;
+    padding:9px;
+    border-radius:24px;
+  }
+  .phone{
+    width:100%;
+    max-width:280px;
+    padding:7px;
+    border-radius:38px;
+  }
+  .phone::before{border-radius:35px}
+  .screen{
+    height:420px;
+    border-radius:29px;
+    overflow-x:hidden;
+  }
+  .notch{top:8px;width:88px;height:28px;border-radius:16px}
+  .store-header{height:64px;padding:25px 14px 9px}
+  .store-header strong{font-size:14px}
+  .content-layer{min-height:860px;overflow-x:hidden}
+  .viewport-marker{top:322px}
+  .canvas-item{max-width:calc(100% - 14px)}
+  .canvas-item[data-type=image],
+  .canvas-item[data-type=variants],
+  .canvas-item[data-type=cta],
+  .canvas-item[data-type=stickyCta]{width:calc(100% - 20px)}
+  .mobile-add-btn{right:16px;bottom:16px;padding:8px 11px}
+}
+@media(max-width:390px){
+  .phone-shell{max-width:284px}
+  .phone{max-width:262px}
+  .screen{height:398px}
+  .content-layer{min-height:820px}
+  .viewport-marker{top:304px}
+}
