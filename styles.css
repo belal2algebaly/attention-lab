@@ -112,9 +112,9 @@ a{text-decoration:none;color:inherit}
 .mood-tag{display:inline-flex;padding:5px 9px;border-radius:999px;background:var(--surface-3);font-size:9px;text-transform:uppercase;letter-spacing:.12em;font-weight:900;margin-bottom:10px;color:#5a564d}
 .speech strong{display:block;font-size:17px;line-height:1.35}.speech p{font-size:11px;line-height:1.55;color:var(--muted);margin:8px 0 0}
 .character-zone[data-mood=critical]{background:linear-gradient(180deg,#fff7f3 0%,#fff 100%)}
-.character-zone[data-mood=critical] .mood-tag{background:#ffe6df;color:#88372b}.character-zone[data-mood=critical] .mouth{d:path("M72 116c10-8 26-8 36 0")}.character-zone[data-mood=critical] .brow-left{transform:rotate(12deg);transform-origin:center}.character-zone[data-mood=critical] .brow-right{transform:rotate(-12deg);transform-origin:center}
+.character-zone[data-mood=critical] .mood-tag{background:#ffe6df;color:#88372b}.character-zone[data-mood=critical] .brow-left{transform:rotate(12deg);transform-origin:center}.character-zone[data-mood=critical] .brow-right{transform:rotate(-12deg);transform-origin:center}
 .character-zone[data-mood=hesitant]{background:linear-gradient(180deg,#fffaf0 0%,#fff 100%)}
-.character-zone[data-mood=hesitant] .mood-tag{background:#fff0c9;color:#7a5a0d}.character-zone[data-mood=hesitant] .mouth{d:path("M78 112h24")}
+.character-zone[data-mood=hesitant] .mood-tag{background:#fff0c9;color:#7a5a0d}
 .character-zone[data-mood=good],.character-zone[data-mood=satisfied]{background:linear-gradient(180deg,#f4faf5 0%,#fff 100%)}
 .character-zone[data-mood=good] .mood-tag,.character-zone[data-mood=satisfied] .mood-tag{background:#e0f0e6;color:#2f6947}.character-zone[data-mood=satisfied] .eye{transform:scaleY(.56)}
 .score-card,.reaction-panel{border-radius:20px;padding:14px;box-shadow:var(--shadow-soft)}
@@ -223,10 +223,10 @@ body.sheet-open{overflow:hidden}
 /* The facial state must reflect the score, not only hard blockers. */
 .character-zone[data-mood=critical] .shopper-svg{transform:translateY(2px)}
 .character-zone[data-mood=critical] .eye{transform:scaleY(.78)}
-.character-zone[data-mood=critical] .mouth{d:path("M72 118c10-10 26-10 36 0")}
+
 .character-zone[data-mood=hesitant] .brow-left{transform:rotate(7deg);transform-origin:center}
 .character-zone[data-mood=hesitant] .brow-right{transform:rotate(-7deg);transform-origin:center}
-.character-zone[data-mood=hesitant] .mouth{d:path("M77 113c8-2 18-1 26 2")}
+
 
 @media(max-width:700px){
   .app-shell{padding:5px 6px 22px}
@@ -271,4 +271,29 @@ body.sheet-open{overflow:hidden}
   .phone{max-width:252px}.screen{height:365px}.content-layer{min-height:780px}.viewport-marker{top:282px}
   .mobile-palette{grid-template-columns:1fr}
   .field{flex-basis:105px}
+}
+
+/* Cross-browser facial expressions: SVG path swapping works on Safari/iPhone. */
+.shopper-svg .mouth-flat,.shopper-svg .mouth-frown{display:none}
+.character-zone[data-mood=critical] .mouth-smile,.character-zone[data-mood=critical] .mouth-flat{display:none}
+.character-zone[data-mood=critical] .mouth-frown{display:block}
+.character-zone[data-mood=hesitant] .mouth-smile,.character-zone[data-mood=hesitant] .mouth-frown{display:none}
+.character-zone[data-mood=hesitant] .mouth-flat{display:block}
+.character-zone[data-mood=good] .mouth-flat,.character-zone[data-mood=good] .mouth-frown,
+.character-zone[data-mood=satisfied] .mouth-flat,.character-zone[data-mood=satisfied] .mouth-frown{display:none}
+.character-zone[data-mood=good] .mouth-smile,.character-zone[data-mood=satisfied] .mouth-smile{display:block}
+
+@media(max-width:700px){
+  .phone{max-width:248px}
+  .screen{height:374px}
+  .phone-shell{max-width:270px;margin:0 auto}
+  .content-layer{min-height:790px}
+  .viewport-marker{top:288px}
+}
+@media(max-width:390px){
+  .phone{max-width:232px}
+  .phone-shell{max-width:252px}
+  .screen{height:352px}
+  .content-layer{min-height:750px}
+  .viewport-marker{top:270px}
 }
