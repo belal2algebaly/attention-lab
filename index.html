@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Interactive product-page attention simulator with live UX feedback, simulated heatmap, and scientific recommendations." />
-  <title>Attention Lab V8</title>
+  <title>Attention Lab V9</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -92,13 +92,21 @@
           <aside class="insight-pane">
             <div class="character-zone" id="characterStage" data-mood="waiting" aria-live="polite">
               <div class="character-figure" aria-hidden="true">
-                <div class="character-hair"></div>
-                <div class="character-head">
-                  <span class="eye left"></span><span class="eye right"></span>
-                  <span class="brow brow-left"></span><span class="brow brow-right"></span>
-                  <span class="mouth"></span>
-                </div>
-                <div class="character-neck"></div><div class="character-torso"></div>
+                <svg class="shopper-svg" viewBox="0 0 180 220" role="img" aria-label="Illustrated shopper character">
+                  <path class="body-shape" d="M34 219v-38c0-31 25-56 56-56s56 25 56 56v38H34Z"/>
+                  <path class="shirt-detail" d="M58 219v-45m64 45v-45"/>
+                  <path class="neck-shape" d="M76 132v18c0 9 28 9 28 0v-18"/>
+                  <ellipse class="face-shape" cx="90" cy="78" rx="53" ry="61"/>
+                  <path class="hair-shape" d="M39 75c0-40 22-64 55-64 29 0 51 18 55 53-14-8-26-19-34-35-15 20-39 33-76 36Z"/>
+                  <path class="ear left-ear" d="M39 76c-11 1-14 26-1 31"/>
+                  <path class="ear right-ear" d="M141 76c11 1 14 26 1 31"/>
+                  <path class="brow brow-left" d="M58 66c7-5 15-5 22-1"/>
+                  <path class="brow brow-right" d="M100 65c8-4 16-3 22 2"/>
+                  <circle class="eye left" cx="70" cy="82" r="5.5"/>
+                  <circle class="eye right" cx="111" cy="82" r="5.5"/>
+                  <path class="nose" d="M91 84l-4 15h8"/>
+                  <path class="mouth" d="M72 111c10 8 26 8 36 0"/>
+                </svg>
               </div>
               <div class="speech">
                 <span id="characterMood" class="mood-tag">Waiting</span>

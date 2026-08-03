@@ -1,35 +1,17 @@
-# Attention Lab V8
+# Attention Lab V9 — Light UI Refinement
 
-A polished interactive product-page attention simulator.
+A full light-mode visual redesign of the Attention Lab simulator.
 
-## V6 improvements
-- Larger, animated shopper character
-- Stronger emotional reactions and smarter contextual feedback
-- Three ready-made layout presets
-- Simulated attention heatmap
-- Scrollable mobile page mockup
-- Expanded optional element library
-- Decision summary with primary friction and best next move
-- Improved desktop and mobile polish
+## V9 changes
+
+- Returned to a clean light interface
+- Rebuilt the color and contrast hierarchy
+- Replaced the old CSS character with a cleaner SVG shopper illustration
+- Refined the phone mockup proportions, frame, camera pill, and internal spacing
+- Reduced decorative color use; semantic colors now indicate status only
+- Improved panel contrast and readability without overpowering the phone canvas
+- Preserved all V8 functionality: live analysis, presets, heatmap, reactions, scrollable phone, and scientific recommendations
 
 ## Deploy
-- Upload all files to GitHub
-- Import the repository in Vercel
-- Framework preset: Other
-- No build command required
 
-The reading path and heatmap are educational simulations, not biometric eye tracking.
-
-
-## V7 layout fixes
-- Desktop uses two comfortable columns; recommendations span full width below.
-- Mobile opens with a compact header and compact analysis controls.
-- Shopper character is reduced only on mobile to keep the phone visible sooner.
-
-## V8 UI Optimization
-- Full dark SaaS studio redesign
-- Phone canvas prioritized as the primary workspace
-- Compact sticky element library
-- Integrated character and result hierarchy
-- Full-width recommendations suite below the workspace
-- Mobile-first compact header and controls
+Upload the files to GitHub, commit, and push. Vercel will redeploy automatically.
