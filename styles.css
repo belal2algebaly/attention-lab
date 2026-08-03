@@ -380,3 +380,37 @@ body.welcome-open{overflow:hidden}
   .viewport-marker{top:284px}
 }
 @media(prefers-reduced-motion:reduce){.welcome-orbit{animation:none}.welcome-card{transition:none}}
+
+/* V23 — true mobile viewport calibration + denser mobile elements */
+@media(max-width:700px){
+  .phone-shell{width:100%;max-width:263px;margin:0 auto;padding:9px;border-radius:24px}
+  .phone{width:100%;max-width:245px;padding:6px;border-radius:33px}
+  .phone::before{border-radius:30px}
+  .screen{height:398px;border-radius:25px;overflow-x:hidden}
+  .notch{top:7px;width:78px;height:25px}
+  .store-header{height:58px;padding:22px 11px 8px}
+  .store-header strong{font-size:13px}
+  .content-layer{min-height:720px;overflow-x:hidden}
+
+  .canvas-item{min-width:92px;padding:6px 7px;border-radius:11px}
+  .canvas-item strong{font-size:8px;line-height:1.15}
+  .canvas-item small{font-size:6.5px;line-height:1.25;margin-top:2px}
+  .canvas-item::before{right:6px;top:5px;transform:scale(.62)}
+  .canvas-item[data-type=image]{height:104px;width:calc(100% - 16px)}
+  .canvas-item[data-type=title],
+  .canvas-item[data-type=rating],
+  .canvas-item[data-type=price]{width:calc(50% - 12px);min-width:0}
+  .canvas-item[data-type=variants],
+  .canvas-item[data-type=cta],
+  .canvas-item[data-type=stickyCta]{width:calc(100% - 16px)}
+  .canvas-item[data-type=variants],.canvas-item[data-type=cta]{min-height:34px}
+  .canvas-item.occluded::after{font-size:6px;padding:2px 5px;top:-10px}
+
+  .mobile-add-btn{right:12px;bottom:10px;padding:6px 9px}
+  .mobile-add-btn span{font-size:15px}.mobile-add-btn strong{font-size:8px}
+}
+@media(max-width:390px){
+  .phone-shell{max-width:263px}
+  .phone{max-width:245px}
+  .screen{height:390px}
+}

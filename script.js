@@ -16,13 +16,14 @@ const defs = [
 function getInitialDefaults() {
   const mobile = window.matchMedia('(max-width: 700px)').matches;
   return mobile ? {
-    image: [10, 12],
-    title: [10, 154],
-    rating: [10, 202],
-    price: [10, 250],
-    variants: [10, 298],
-    cta: [10, 346],
-    trust: [10, 394]
+    // Compact mobile-first decision flow. The primary CTA is fully visible
+    // inside the real mobile content viewport, not the desktop viewport model.
+    image: [8, 8],
+    title: [8, 120],
+    rating: [126, 120],
+    price: [8, 160],
+    variants: [8, 202],
+    cta: [8, 246]
   } : {
     image: [16, 22],
     title: [16, 258],
@@ -146,12 +147,22 @@ function edgeGap(a, b) {
 function centerDistance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
 
 function viewportBoundary() {
+  // Element coordinates are relative to contentLayer, while screen height also
+  // includes the sticky store header. Calculate the real visible content area
+  // for the current device instead of reusing a desktop-sized fold.
+  const header = screen.querySelector('.store-header');
+  const headerHeight = header ? header.offsetHeight : 0;
+  const mobile = window.matchMedia('(max-width: 700px)').matches;
+  const bottomSafeArea = mobile ? 46 : 14; // floating Add Element button / breathing room
+  return Math.max(150, screen.clientHeight - headerHeight - bottomSafeArea);
+}
+
+function syncViewportMarker() {
   const marker = document.querySelector('.viewport-marker');
-  if (marker && contentLayer) {
-    const boundary = marker.offsetTop - contentLayer.offsetTop;
-    if (boundary > 120) return boundary;
-  }
-  return Math.max(260, screen.clientHeight - 110);
+  if (!marker) return;
+  const header = screen.querySelector('.store-header');
+  const headerHeight = header ? header.offsetHeight : 0;
+  marker.style.top = `${headerHeight + viewportBoundary()}px`;
 }
 
 function applyPreset(name) {
@@ -955,6 +966,7 @@ function grade(n) {
 }
 
 function analyze() {
+  syncViewportMarker();
   const per = visibilityMap();
   const relations = relationScores();
   const visibility = weightedVisibility(per);
@@ -1201,7 +1213,7 @@ heatmapBtn.addEventListener('click', () => {
 
 document.getElementById('resetBtn').addEventListener('click', reset);
 screen.addEventListener('scroll', schedule);
-window.addEventListener('resize', schedule);
+window.addEventListener('resize', () => { syncViewportMarker(); schedule(); });
 
 const dialog = document.getElementById('methodDialog');
 document.getElementById('methodBtn').addEventListener('click', () => dialog.showModal());
