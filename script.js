@@ -377,17 +377,34 @@ function weightedVisibility(per) {
   return weights ? (total / weights) * 100 : 0;
 }
 
+function initialViewportCoverage(id) {
+  if (!placed.has(id)) return 0;
+  const b = box(placed.get(id));
+  const boundary = viewportBoundary();
+  const visibleTop = Math.max(0, b.y);
+  const visibleBottom = Math.min(boundary, b.bottom);
+  const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+  return clamp(visibleHeight / Math.max(1, b.h), 0, 1);
+}
+
 function foldScoreFor(id) {
   if (!placed.has(id)) return 0;
   const b = box(placed.get(id));
   const boundary = viewportBoundary();
-  const depth = Math.max(0, b.y - boundary);
-  const belowFoldDecay = Math.exp(-depth / Math.max(1, boundary * 0.78));
-  // A very small within-viewport depth term keeps the model continuous without
-  // pretending that a one-pixel move creates a proven behavioral change.
-  const withinViewportDepth = Math.min(b.y, boundary) / Math.max(1, boundary);
-  const withinViewportFactor = 1 - 0.035 * withinViewportDepth;
-  return clamp(100 * belowFoldDecay * withinViewportFactor, 0, 100);
+  const coverage = initialViewportCoverage(id);
+
+  // Full visibility inside the initial content viewport is rewarded. Partial
+  // visibility is explicitly penalized, so a clipped CTA cannot be treated as
+  // fully discoverable merely because its top edge is above the fold.
+  if (coverage > 0) {
+    const centerDepth = clamp((b.y + b.h / 2) / Math.max(1, boundary), 0, 1.5);
+    const depthFactor = 1 - 0.055 * Math.min(1, centerDepth);
+    const coverageFactor = Math.pow(coverage, 1.45);
+    return clamp(100 * coverageFactor * depthFactor, 0, 100);
+  }
+
+  const belowDepth = Math.max(0, b.y - boundary);
+  return clamp(18 * Math.exp(-belowDepth / Math.max(1, boundary * 0.55)), 0, 18);
 }
 
 function weightedFoldDiscoverability() {
@@ -690,12 +707,18 @@ function semanticPlacementAudit(per, relations) {
 function criticalCoverageScore(per) {
   let total = 0;
   let weights = 0;
-  const weightsMap = { image:0.72, title:0.88, price:1.0, variants:1.0, cta:1.18 };
+  const weightsMap = { image:0.72, title:0.88, price:1.0, variants:1.0, cta:1.28 };
   criticalIds.forEach(id => {
     const w = weightsMap[id] || 1;
     const present = placed.has(id) ? 1 : 0;
     const visible = placed.has(id) ? (per[id] ?? 0) : 0;
-    total += 100 * present * visible * w;
+    const viewportCoverage = placed.has(id) ? initialViewportCoverage(id) : 0;
+    // Critical coverage means both unobstructed and sufficiently present in the
+    // initial decision viewport. CTA receives the strongest full-visibility requirement.
+    const viewportFactor = id === 'cta'
+      ? Math.pow(viewportCoverage, 1.55)
+      : 0.55 + 0.45 * Math.pow(viewportCoverage, 1.15);
+    total += 100 * present * visible * viewportFactor * w;
     weights += w;
   });
   return weights ? total / weights : 0;
@@ -705,6 +728,7 @@ function actionReadinessScore(per) {
   if (!placed.has('cta')) return 0;
   const ctaVis = per.cta ?? 0;
   const ctaFold = foldScoreFor('cta') / 100;
+  const ctaCoverage = initialViewportCoverage('cta');
   const variantPresent = placed.has('variants') ? 1 : 0;
   const variantVis = placed.has('variants') ? (per.variants ?? 0) : 0;
   let pairScore = 0;
@@ -714,7 +738,7 @@ function actionReadinessScore(per) {
   }
   const primary = 100 * Math.pow(Math.max(0.0001, ctaVis * ctaFold), 0.68);
   const selection = 100 * variantPresent * variantVis;
-  let score = 0.48 * primary + 0.24 * selection + 0.28 * (100 * pairScore);
+  let score = 0.34 * primary + 0.20 * selection + 0.22 * (100 * pairScore) + 24 * Math.pow(ctaCoverage, 1.6);
 
   // A sticky CTA is support, not a replacement for a deeply buried primary action.
   if (placed.has('stickyCta')) {
@@ -750,11 +774,14 @@ function taskFailureCaps(score, metrics, per) {
 
   if (placed.has('cta')) {
     const fold = foldScoreFor('cta');
+    const coverage = initialViewportCoverage('cta');
     const ctaVisible = (per.cta ?? 0) * 100;
     let foldCap = 100;
-    if (fold < 18) foldCap = placed.has('stickyCta') ? 52 + 0.33 * fold : 38 + 0.22 * fold;
-    else if (fold < 32) foldCap = placed.has('stickyCta') ? 58 + 0.64 * (fold - 18) : 42 + 0.86 * (fold - 18);
-    else if (fold < 50) foldCap = 54 + (fold - 32);
+    if (coverage <= 0.01) foldCap = placed.has('stickyCta') ? 54 : 40;
+    else if (coverage < 0.50) foldCap = 42 + coverage * 22;
+    else if (coverage < 0.90) foldCap = 53 + (coverage - 0.50) * 45;
+    else if (coverage < 0.985) foldCap = 71 + (coverage - 0.90) * 120;
+    else if (fold < 50) foldCap = 70 + fold * 0.25;
     capped = Math.min(capped, foldCap);
     if (ctaVisible < 85) capped = Math.min(capped, 28 + 0.19 * ctaVisible);
   }
@@ -804,7 +831,8 @@ function buildReactions(per, relations, metrics, semanticAudit) {
   if (!placed.has('price')) reactions.push('I cannot evaluate the offer because the price is missing.');
   if (!placed.has('variants')) reactions.push('I cannot make the required product choice.');
   if (!placed.has('cta')) reactions.push('I cannot see the next action.');
-  else if (foldScoreFor('cta') < 32) reactions.push('I understand the product, but the purchase action is too far down the page.');
+  else if (initialViewportCoverage('cta') < 0.985 && initialViewportCoverage('cta') > 0) reactions.push('I can only see part of the purchase action in the first view, so I am not ready to act.');
+  else if (initialViewportCoverage('cta') <= 0) reactions.push('I understand the product, but the purchase action is below the first view.');
 
   Object.entries(per).forEach(([id, v]) => {
     if (v < 0.92) reactions.push(`${labelFor(id)} is ${Math.round((1 - v) * 100)}% covered.`);
@@ -1000,8 +1028,13 @@ function analyze() {
   const critical = [];
   // Action blockers are prioritized because they stop task completion.
   if (!placed.has('cta')) critical.push('Add to cart is missing, so the purchase task cannot be completed.');
-  else if ((per.cta ?? 1) < 0.85) critical.push(`Add to cart is ${Math.round((1 - per.cta) * 100)}% hidden.`);
-  else if (foldScoreFor('cta') < 32) critical.push(`Add to cart is too deep in the page to support action readiness (${foldScoreFor('cta').toFixed(1)} discoverability).`);
+  else if ((per.cta ?? 1) < 0.85) critical.push(`Add to cart is ${Math.round((1 - per.cta) * 100)}% hidden by another element.`);
+  else {
+    const ctaCoverage = initialViewportCoverage('cta');
+    if (ctaCoverage <= 0.01) critical.push('Add to cart is completely below the initial viewport.');
+    else if (ctaCoverage < 0.985) critical.push(`Only ${Math.round(ctaCoverage * 100)}% of Add to cart is visible in the initial viewport. The complete action must be visible to count as ready.`);
+    else if (foldScoreFor('cta') < 50) critical.push(`Add to cart has weak initial-view discoverability (${foldScoreFor('cta').toFixed(1)}).`);
+  }
 
   if (placed.has('variants') && placed.has('cta')) {
     const vr = relations.find(r => r.a === 'variants' && r.b === 'cta');
@@ -1029,6 +1062,13 @@ function analyze() {
   if (relationship < 74) findings.push('Strengthen the visibility and distance of semantically related element pairs.');
   if (action < 74) findings.push('Improve action readiness: keep the primary CTA visible, reachable after option selection, and close to the variants.');
   if (continuity < 74) findings.push('Repair the title → price → variants → CTA decision chain; one weak stage is lowering the whole path.');
+  ['price','variants'].forEach(id => {
+    if (placed.has(id)) {
+      const coverage = initialViewportCoverage(id);
+      if (coverage > 0 && coverage < 0.985) findings.push(`${labelFor(id)} is only ${Math.round(coverage * 100)}% visible in the initial viewport.`);
+      else if (coverage <= 0) findings.push(`${labelFor(id)} is below the initial viewport on this screen size.`);
+    }
+  });
   if (criticalCoverage < 90) findings.push('Restore full visibility for all task-critical elements; averages cannot compensate for a weak critical stage.');
   if (modeSelect.value === 'gutenberg') findings.push('Treat Gutenberg as a comparison heuristic only; product-task constraints remain primary.');
   if (!critical.length && findings.length === 0) findings.push('The current layout has strong continuous scores across visibility, flow, grouping, and relationship integrity.');
@@ -1056,7 +1096,7 @@ function updateCharacter(score, critical, reactions) {
   const quote = document.getElementById('characterQuote');
   const sub = document.getElementById('characterSubtext');
 
-  const actionBlocked = critical.some(x => /Add to cart|Product options must|Variants and Add/i.test(x));
+  const actionBlocked = critical.some(x => /Add to cart|purchase action|Product options must|Variants and Add|initial viewport/i.test(x));
   const hasCritical = critical.length > 0;
 
   let state = 'hesitant';
